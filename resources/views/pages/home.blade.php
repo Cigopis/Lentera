@@ -2,29 +2,43 @@
 
 @section('content')
 
-    {{-- Banner Slider --}}
+    
     <x-banner-slider :banners="$banners" />
 
     <section class="max-w-7xl mx-auto px-6">
 
         <div class="flex flex-col lg:flex-row gap-8 items-start">
 
-            {{-- LEFT SIDE --}}
             <div class="flex-1">
                 <h2 class="text-3xl font-bold text-blue-700 mb-6">
                     Kategori Lot Lelang
                 </h2>
 
                 <div class="flex gap-4 flex-wrap">
-                    <button class="px-5 py-2 border rounded-lg hover:bg-blue-600 hover:text-white">Semua</button>
-                    <button class="px-5 py-2 border rounded-lg hover:bg-blue-600 hover:text-white">Rumah</button>
-                    <button class="px-5 py-2 border rounded-lg hover:bg-blue-600 hover:text-white">Gudang</button>
-                    <button class="px-5 py-2 border rounded-lg hover:bg-blue-600 hover:text-white">Mobil</button>
-                    <button class="px-5 py-2 border rounded-lg hover:bg-blue-600 hover:text-white">Tanah</button>
+                    
+                    <a href="{{ request()->url() }}"
+                    class="px-5 py-2 border rounded-lg transition
+                    {{ request('kategori') ? 'hover:bg-blue-600 hover:text-white' : 'bg-blue-600 text-white border-blue-600' }}">
+                        Semua
+                    </a>
+
+                    
+                    @foreach ($categories as $item)
+                        <a href="{{ request()->fullUrlWithQuery(['kategori' => $item->slug]) }}"
+                        class="px-5 py-2 border rounded-lg transition
+                        {{ request('kategori') == $item->slug 
+                                ? 'bg-blue-600 text-white border-blue-600' 
+                                : 'hover:bg-blue-600 hover:text-white' }}">
+                            
+                            {{ $item->name }}
+                        </a>
+                    @endforeach
+
                 </div>
+
             </div>
 
-            {{-- RIGHT SIDE CARD --}}
+           
             <div class="w-full lg:w-[420px] bg-blue-100 rounded-xl p-5 border border-blue-700">
 
                 {{-- Logo --}}
@@ -36,10 +50,10 @@
                     >
                 </div>
 
-                {{-- Menu Grid --}}
+                
                 <div class="grid grid-cols-3 gap-3">
 
-                    {{-- Jadwal --}}
+                  
                     <div class="bg-blue-800 rounded-lg p-4 text-white text-center hover:scale-105 transition duration-200">
                         <div class="flex justify-center mb-2">
                             {{-- Heroicon Calendar --}}
@@ -56,7 +70,7 @@
                         <div class="text-sm font-semibold">Jadwal</div>
                     </div>
 
-                    {{-- Hot Deals --}}
+                    
                     <div class="bg-blue-800 rounded-lg p-4 text-white text-center hover:scale-105 transition duration-200">
                         <div class="flex justify-center mb-2">
                             {{-- Heroicon Fire --}}
@@ -73,7 +87,7 @@
                         <div class="text-sm font-semibold">Hot Deals</div>
                     </div>
 
-                    {{-- Populer --}}
+                  
                     <div class="bg-blue-800 rounded-lg p-4 text-white text-center hover:scale-105 transition duration-200">
                         <div class="flex justify-center mb-2">
                             {{-- Heroicon Star --}}
@@ -94,8 +108,31 @@
 
             </div>
 
-
         </div>
+        <section class="max-w-7xl mx-auto px-6 mt-12">
+
+            <h2 class="text-2xl font-bold text-blue-700 mb-6">
+                Daftar Lot Lelang
+            </h2>
+
+            <div class="max-w-7xl mx-auto px-6 py-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                    @forelse($catalogs as $catalog)
+                        <x-catalog-card :catalog="$catalog" />
+                    @empty
+                        <div class="text-center py-20 text-gray-500">
+                            Tidak ada lot lelang tersedia.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <div class="mt-10">
+                {{ $catalogs->links() }}
+            </div>
+
+        </section>
 
     </section>
 

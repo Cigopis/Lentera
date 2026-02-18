@@ -140,6 +140,41 @@ class AuctionCatalog extends Model
         return $this->hasMany(AssetFacility::class, 'catalog_id');
     }
 
+    public function scopeFilter($query, $request)
+    {
+        if ($request->filled('kategori')) {
+            $query->whereHas('category', function ($q) use ($request) {
+                $q->where('slug', $request->kategori);
+            });
+        }
+
+        if ($request->filled('min')) {
+            $query->where('reserve_price', '>=', (int) $request->min);
+        }
+
+        if ($request->filled('max')) {
+            $query->where('reserve_price', '<=', (int) $request->max);
+        }
+
+        if ($request->has('kota')) {
+
+            $kota = array_filter((array) $request->kota);
+
+            if (!empty($kota)) {
+                $query->whereHas('city', function ($q) use ($kota) {
+                    $q->whereIn('slug', $kota);
+                });
+            }
+        }
+
+        if ($request->filled('bulan')) {
+            $query->whereMonth('auction_date', (int) $request->bulan);
+        }
+
+        return $query;
+    }
+
+
     /**
      * Relasi ke ActivityLog
      */

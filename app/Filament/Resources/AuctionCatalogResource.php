@@ -4,6 +4,12 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AuctionCatalogResource\Pages;
 use App\Filament\Resources\AuctionCatalogResource\RelationManagers;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
+use Illuminate\Support\Facades\Storage;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\ImageColumn;
 use App\Models\AuctionCatalog;
 use App\Models\Category;
 use App\Models\SubCategory;
@@ -104,7 +110,6 @@ class AuctionCatalogResource extends Resource
 
                                         Forms\Components\Select::make('sub_category_id')
                                             ->label('Sub Kategori')
-                                            ->required()
                                             ->options(fn (Get $get) => SubCategory::where('category_id', $get('category_id'))->pluck('name', 'id'))
                                             ->searchable()
                                             ->preload()
@@ -162,11 +167,11 @@ class AuctionCatalogResource extends Resource
                                 Forms\Components\Section::make('Jadwal Lelang')
                                     ->schema([
                                         Forms\Components\DatePicker::make('auction_date')
-                                            ->label('Tanggal Lelang')
+                                            ->label('Tanggal Akhir Lelang')
                                             ->required()
                                             ->native(false)
                                             ->displayFormat('d/m/Y')
-                                            ->helperText('Tanggal pelaksanaan lelang')
+                                            ->helperText('Tanggal pelaksanaan selesai lelang')
                                             ->minDate(now()),
 
                                         Forms\Components\TextInput::make('official_auction_url')
@@ -249,24 +254,57 @@ class AuctionCatalogResource extends Resource
                                 Forms\Components\Section::make('Gambar Katalog')
                                     ->description('Upload foto-foto aset (minimal 1, maksimal 10)')
                                     ->schema([
-                                        Forms\Components\FileUpload::make('images')
+                                        Forms\Components\FileUpload::make('catalogImages')
                                             ->label('Foto Aset')
                                             ->image()
                                             ->multiple()
                                             ->reorderable()
-                                            ->appendFiles()
-                                            ->maxFiles(10)
-                                            ->directory('catalog-images')
+                                            ->directory('catalog_images')
+                                            ->disk('public')
                                             ->imageEditor()
                                             ->imageEditorAspectRatios([
                                                 '16:9',
                                                 '4:3',
                                                 '1:1',
                                             ])
-                                            ->helperText('Upload foto dengan kualitas baik. Format: JPG, PNG. Max: 2MB per file.')
+                                            ->maxFiles(10)
+                                            ->required()
+                                            ->getUploadedFileNameForStorageUsing(fn ($file) => Str::uuid() . '.webp')
+                                            ->saveUploadedFileUsing(function ($file, $get, $state, $record) {
+                                                $manager = new ImageManager(new Driver());
+
+                                                $image = $manager->read($file)
+                                                    ->resize(1920, null, function ($constraint) {
+                                                        $constraint->aspectRatio();
+                                                        $constraint->upsize();
+                                                    })                                                  
+                                                    ->toWebp(80);
+
+                                                $path = 'catalog_images/' . Str::uuid() . '.webp';
+
+                                                // Simpan ke storage/public/catalog_images
+                                                Storage::disk('public')->put($path, (string) $image);
+
+                                                if ($record) {
+                                                    // cek apakah sudah ada primary
+                                                        $hasPrimary = \App\Models\CatalogImage::where('catalog_id', $record->id)
+                                                                                            ->where('is_primary', true)
+                                                                                            ->exists();
+
+                                                        \App\Models\CatalogImage::create([
+                                                            'catalog_id' => $record->id,
+                                                            'image_path' => $path,
+                                                            'is_primary' => !$hasPrimary,
+                                                    ]);
+                                                }
+
+                                                return $path;
+                                            })
+
                                             ->columnSpanFull(),
                                     ]),
                             ]),
+
 
                         // TAB 5: STATUS & PENGATURAN
                         Forms\Components\Tabs\Tab::make('Status & Pengaturan')

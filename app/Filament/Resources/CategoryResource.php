@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\CategoryResource\RelationManagers\SubCategoriesRelationManager;
 use App\Filament\Resources\CategoryResource\Pages;
 use App\Filament\Resources\CategoryResource\RelationManagers;
 use App\Models\Category;
@@ -123,7 +124,7 @@ class CategoryResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            SubCategoriesRelationManager::class,
         ];
     }
 
