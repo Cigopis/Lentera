@@ -2,139 +2,666 @@
 
 @section('content')
 
-    
+<style>
+html, body { background-color: #f0f9ff !important; }
+
+/* GLOBAL BACKGROUND */
+body::before {
+    content: "";
+    position: fixed;
+    inset: -30%;
+    background: radial-gradient(circle at 20% 30%, #dbeafe 0%, #ede9fe 40%, #f0f9ff 80%);
+    animation: morph 18s infinite alternate ease-in-out;
+    z-index: -1;
+    will-change: transform;
+}
+@keyframes morph {
+    0%   { transform: scale(1)   rotate(0deg);  }
+    50%  { transform: scale(1.2) rotate(8deg);  }
+    100% { transform: scale(1.1) rotate(-8deg); }
+}
+
+/* SCROLL REVEAL */
+.reveal {
+    opacity: 0;
+    filter: blur(20px);
+    transform: translateY(80px);
+    transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.active {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+}
+
+/* MAGNETIC */
+.magnetic { transition: transform 0.2s ease-out; }
+
+/* ============================================
+   STACK SCROLL — MORNING LIGHT
+   ============================================ */
+.stackscroll-outer {
+    position: relative;
+    height: 400vh;
+    background: #fff;
+}
+.stackscroll-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.stackscroll-bg {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 30% 20%, #bfdbfe 0%, transparent 55%),
+        radial-gradient(ellipse at 70% 80%, #ddd6fe 0%, transparent 55%),
+        linear-gradient(to bottom, #f0f9ff 0%, #ffffff 100%);
+    z-index: 0;
+}
+.stackscroll-rays {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    opacity: 0.12;
+    background: repeating-conic-gradient(
+        from 0deg at 50% -20%,
+        #93c5fd 0deg 6deg,
+        transparent 6deg 18deg
+    );
+    animation: raysRotate 60s linear infinite;
+}
+@keyframes raysRotate {
+    from { transform: rotate(0deg);   }
+    to   { transform: rotate(360deg); }
+}
+.stackscroll-dust {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background-image:
+        radial-gradient(circle, rgba(59,130,246,0.35) 1px, transparent 1px),
+        radial-gradient(circle, rgba(139,92,246,0.2)  1px, transparent 1px);
+    background-size: 60px 60px, 100px 100px;
+    background-position: 0 0, 30px 30px;
+    opacity: 0.4;
+    animation: dustFloat 40s linear infinite;
+}
+@keyframes dustFloat {
+    from { transform: translateY(0);      }
+    to   { transform: translateY(-200px); }
+}
+.stackscroll-shoot {
+    position: absolute;
+    top: 20%;
+    left: -200px;
+    width: 300px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(59,130,246,0.6), transparent);
+    opacity: 0;
+    z-index: 3;
+    animation: shoot 12s ease-in-out infinite;
+}
+@keyframes shoot {
+    0%   { transform: translate(0,0) rotate(15deg);         opacity: 0; }
+    5%   {                                                   opacity: 1; }
+    40%  { transform: translate(130vw, 80px) rotate(15deg); opacity: 0; }
+    100% {                                                   opacity: 0; }
+}
+
+/* Progress bar */
+.stackscroll-progress {
+    position: absolute;
+    left: clamp(16px, 3vw, 48px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 200px;
+    background: rgba(59,130,246,0.12);
+    border-radius: 99px;
+    z-index: 30;
+}
+.stackscroll-progress-fill {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 0%;
+    background: linear-gradient(to bottom, #3b82f6, #6366f1);
+    border-radius: 99px;
+    transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 12px rgba(59,130,246,0.4);
+}
+.stackscroll-dots {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+    top: 0;
+    height: 100%;
+    pointer-events: none;
+}
+.stackscroll-dot {
+    width: 9px; height: 9px;
+    background: rgba(59,130,246,0.2);
+    border-radius: 50%;
+    margin-left: -3px;
+    transition: all 0.5s ease;
+    border: 1.5px solid transparent;
+    flex-shrink: 0;
+}
+.stackscroll-dot.active {
+    background: #3b82f6;
+    border-color: #93c5fd;
+    box-shadow: 0 0 12px rgba(59,130,246,0.5);
+}
+
+/* Section header */
+.stackscroll-section-header {
+    position: absolute;
+    top: clamp(32px, 5vh, 60px);
+    left: clamp(48px, 6vw, 100px);
+    z-index: 25;
+    text-align: left;
+}
+.stackscroll-section-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #3b82f6;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+.stackscroll-section-title {
+    font-size: clamp(22px, 3.5vw, 40px);
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+/* Content */
+.stackscroll-content {
+    position: relative;
+    z-index: 20;
+    width: 100%;
+    max-width: 680px;
+    padding: 0 24px;
+}
+.stackscroll-step {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 24px;
+    opacity: 0;
+    transform: translateY(60px) scale(0.96);
+    filter: blur(8px);
+    transition:
+        opacity   0.9s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+        filter    0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+.stackscroll-step.active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+    pointer-events: auto;
+}
+.stackscroll-step.exit-up {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.96);
+    filter: blur(8px);
+}
+
+/* Number */
+.stackscroll-num {
+    font-size: clamp(80px, 15vw, 140px);
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, #2563eb, #7c3aed, #0ea5e9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.04em;
+    position: relative;
+    filter: drop-shadow(0 4px 24px rgba(59,130,246,0.18));
+}
+.stackscroll-num::after {
+    content: attr(data-num);
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #3b82f6, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: blur(24px);
+    z-index: -1;
+    opacity: 0.5;
+}
+
+/* Divider */
+.stackscroll-divider {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, #3b82f6, transparent);
+    margin: 12px auto 28px;
+    position: relative;
+}
+.stackscroll-divider::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px; height: 6px;
+    background: #3b82f6;
+    border-radius: 50%;
+    box-shadow: 0 0 14px rgba(59,130,246,0.5);
+}
+
+/* Title & desc */
+.stackscroll-title {
+    font-size: clamp(22px, 4vw, 36px);
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 16px;
+}
+.stackscroll-desc {
+    font-size: clamp(14px, 2vw, 17px);
+    color: #64748b;
+    line-height: 1.75;
+    max-width: 480px;
+}
+
+/* Badge */
+.stackscroll-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 99px;
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.2);
+    color: #2563eb;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+/* Glow */
+.stackscroll-glow {
+    position: absolute;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(140px);
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+}
+.stackscroll-glow.s1 { background: #bfdbfe; }
+.stackscroll-glow.s2 { background: #ddd6fe; }
+.stackscroll-glow.s3 { background: #bae6fd; }
+.stackscroll-glow.active { opacity: 0.8; }
+
+/* Scroll hint */
+.stackscroll-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.4;
+    animation: hintBob 2s ease-in-out infinite;
+    transition: opacity 0.5s;
+    z-index: 30;
+}
+.stackscroll-hint.hidden { opacity: 0; pointer-events: none; }
+@keyframes hintBob {
+    0%, 100% { transform: translateX(-50%) translateY(0);  }
+    50%       { transform: translateX(-50%) translateY(6px); }
+}
+.stackscroll-hint span {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.stackscroll-hint svg {
+    width: 20px; height: 20px;
+    stroke: #64748b;
+}
+
+/* Hero text */
+.hero-text h1 { color: #0f172a; }
+.hero-text p  { color: #475569; }
+
+/* Catalog section */
+.catalog-section          { background: #f8fafc; }
+.catalog-section h2       { color: #0f172a; }
+.catalog-section p        { color: #64748b; }
+</style>
+
+<script>
+/* =====================================================
+   FIX: back/forward navigation — bfcache scroll reset
+   ===================================================== */
+if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+}
+
+window.addEventListener('pageshow', function(e) {
+    if (e.persisted) {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        setTimeout(function() {
+            window.dispatchEvent(new Event('scroll'));
+        }, 80);
+    }
+});
+
+if (!window.location.hash) {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    /* ===== Scroll Reveal ===== */
+    var reveals = document.querySelectorAll(".reveal");
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("active");
+            } else {
+                entry.target.classList.remove("active");
+            }
+        });
+    }, { threshold: 0.15 });
+    reveals.forEach(function(el) { observer.observe(el); });
+
+    /* ===== Magnetic Hover ===== */
+    document.querySelectorAll(".magnetic").forEach(function(btn) {
+        btn.addEventListener("mousemove", function(e) {
+            var rect = btn.getBoundingClientRect();
+            var x = e.clientX - rect.left - rect.width  / 2;
+            var y = e.clientY - rect.top  - rect.height / 2;
+            btn.style.transform = "translate(" + (x * 0.2) + "px, " + (y * 0.2) + "px)";
+        });
+        btn.addEventListener("mouseleave", function() {
+            btn.style.transform = "translate(0,0)";
+        });
+    });
+
+    /* ===== Parallax ===== */
+    window.addEventListener("scroll", function() {
+        var offset = window.scrollY;
+        document.querySelectorAll("[data-depth]").forEach(function(el) {
+            el.style.transform = "translateY(" + (offset * el.dataset.depth) + "px)";
+        });
+    });
+
+    /* ===== Stack Scroll ===== */
+    (function() {
+        var outer = document.querySelector('.stackscroll-outer');
+        if (!outer) return;
+
+        var steps = document.querySelectorAll('.stackscroll-step');
+        var fill  = document.getElementById('ss-fill');
+        var dots  = document.querySelectorAll('[data-dot]');
+        var hint  = document.getElementById('ss-hint');
+        var glow  = document.getElementById('ss-glow');
+
+        var TOTAL       = steps.length;
+        var current     = -1;
+        var glowColors  = ['s1','s2','s3'];
+
+        function setStep(idx) {
+            if (idx === current) return;
+            steps.forEach(function(el, i) {
+                if (i === idx) {
+                    el.classList.remove('exit-up');
+                    el.classList.add('active');
+                } else if (i < idx) {
+                    el.classList.remove('active');
+                    el.classList.add('exit-up');
+                } else {
+                    el.classList.remove('active','exit-up');
+                }
+            });
+            dots.forEach(function(dot, i) {
+                dot.classList.toggle('active', i <= idx);
+            });
+            if (fill) fill.style.height = ((idx + 1) / TOTAL * 100) + '%';
+            if (glow) glow.className = 'stackscroll-glow ' + (glowColors[idx] || 's1') + ' active';
+            if (hint) hint.classList.toggle('hidden', idx > 0);
+            current = idx;
+        }
+
+        function onScroll() {
+            var rect       = outer.getBoundingClientRect();
+            var outerH     = outer.offsetHeight;
+            var vpH        = window.innerHeight;
+            var scrolled   = -rect.top;
+            var scrollable = outerH - vpH;
+
+            if (scrolled < 0 || scrolled > scrollable) return;
+
+            var progress  = Math.min(Math.max(scrolled / scrollable, 0), 1);
+            var stepIndex = Math.min(Math.floor(progress * TOTAL), TOTAL - 1);
+            setStep(stepIndex);
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+    })();
+
+});
+</script>
+
+
+{{-- ===================== HERO ==================== --}}
+<section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+
     <x-banner-slider :banners="$banners" />
 
-    <section class="max-w-7xl mx-auto px-6">
+    <div class="absolute inset-0 pointer-events-none z-10">
+        <div data-depth="0.2"
+             class="absolute -top-40 -left-40 w-[600px] h-[600px]
+                    bg-blue-200 rounded-full blur-[200px] opacity-60"></div>
+        <div data-depth="0.4"
+             class="absolute bottom-0 right-0 w-[500px] h-[500px]
+                    bg-violet-200 rounded-full blur-[180px] opacity-50"></div>
+    </div>
 
-        <div class="flex flex-col lg:flex-row gap-8 items-start">
+    <div class="hero-text relative z-20 text-center px-6"
+         x-data
+         x-init="$el.classList.add('active')"
+         x-transition:enter="transition duration-1000 ease-out"
+         x-transition:enter-start="opacity-0 translate-y-10 blur-xl"
+         x-transition:enter-end="opacity-100 translate-y-0 blur-0">
+        <h1 class="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
+            E-Katalog Lentera Kertajaya
+        </h1>
+        <p class="mt-6 text-lg max-w-xl mx-auto">
+            Pusat informasi aset lelang terpadu yang membantu Anda melihat peluang dengan lebih jelas dan terarah.
+        </p>
+        <div class="mt-10">
+            <a href="{{ route('katalog.index') }}""
+               class="magnetic inline-block px-10 py-4 rounded-full
+                      bg-blue-600 text-white font-semibold
+                      shadow-lg shadow-blue-400/30
+                      hover:scale-105 transition hover:bg-blue-700">
+                Cari Katalog
+            </a>
+        </div>
+    </div>
 
-            <div class="flex-1">
-                <h2 class="text-3xl font-bold text-blue-700 mb-6">
-                    Kategori Lot Lelang
-                </h2>
+</section>
 
-                <div class="flex gap-4 flex-wrap">
-                    
-                    <a href="{{ request()->url() }}"
-                    class="px-5 py-2 border rounded-lg transition
-                    {{ request('kategori') ? 'hover:bg-blue-600 hover:text-white' : 'bg-blue-600 text-white border-blue-600' }}">
-                        Semua
-                    </a>
 
-                    
-                    @foreach ($categories as $item)
-                        <a href="{{ request()->fullUrlWithQuery(['kategori' => $item->slug]) }}"
-                        class="px-5 py-2 border rounded-lg transition
-                        {{ request('kategori') == $item->slug 
-                                ? 'bg-blue-600 text-white border-blue-600' 
-                                : 'hover:bg-blue-600 hover:text-white' }}">
-                            
-                            {{ $item->name }}
-                        </a>
-                    @endforeach
+{{-- ===================== STACK SCROLL ==================== --}}
+<section class="stackscroll-outer" id="cara-daftar">
+    <div class="stackscroll-sticky">
 
-                </div>
+        <div class="stackscroll-bg"></div>
+        <div class="stackscroll-rays"></div>
+        <div class="stackscroll-dust"></div>
+        <div class="stackscroll-shoot"></div>
 
+        <div class="stackscroll-glow s1 active" id="ss-glow"></div>
+
+        <div class="stackscroll-section-header pt-14">
+            <p class="stackscroll-section-eyebrow">Cara Kerja</p>
+            <h2 class="stackscroll-section-title">Panduan Alur Lentera </h2>
+        </div>
+
+        {{-- PROGRESS BAR --}}
+        <div class="stackscroll-progress">
+            <div class="stackscroll-progress-fill" id="ss-fill"></div>
+
+            <div class="stackscroll-dots">
+                @foreach($guideSteps as $index => $step)
+                    <div class="stackscroll-dot {{ $loop->first ? 'active' : '' }}" 
+                         data-dot="{{ $index }}">
+                    </div>
+                @endforeach
             </div>
+        </div>
 
-           
-            <div class="w-full lg:w-[420px] bg-blue-100 rounded-xl p-5 border border-blue-700">
+        {{-- CONTENT --}}
+        <div class="stackscroll-content" style="position:relative; height:340px;">
 
-                {{-- Logo --}}
-                <div class="mb-4">
-                    <img 
-                        src="{{ asset('img/bri-info-lelang.png') }}" 
-                        alt="BRI Info Lelang"
-                        class="h-16"
-                    >
-                </div>
+            @foreach($guideSteps as $index => $step)
+                <div class="stackscroll-step {{ $loop->first ? 'active' : '' }}" 
+                     data-step="{{ $index }}">
 
-                
-                <div class="grid grid-cols-3 gap-3">
-
-                  
-                    <div class="bg-blue-800 rounded-lg p-4 text-white text-center hover:scale-105 transition duration-200">
-                        <div class="flex justify-center mb-2">
-                            {{-- Heroicon Calendar --}}
-                            <svg xmlns="http://www.w3.org/2000/svg" 
-                                class="w-6 h-6 text-yellow-300" 
-                                fill="none" 
-                                viewBox="0 0 24 24" 
-                                stroke="currentColor" 
-                                stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" 
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <div class="text-sm font-semibold">Jadwal</div>
+                    <div class="stackscroll-badge">
+                        Langkah {{ $step->step_number }}
                     </div>
 
-                    
-                    <div class="bg-blue-800 rounded-lg p-4 text-white text-center hover:scale-105 transition duration-200">
-                        <div class="flex justify-center mb-2">
-                            {{-- Heroicon Fire --}}
-                            <svg xmlns="http://www.w3.org/2000/svg" 
-                                class="w-6 h-6 text-yellow-300" 
-                                fill="none" 
-                                viewBox="0 0 24 24" 
-                                stroke="currentColor" 
-                                stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" 
-                                    d="M12 3c.132 2.378-1.207 4.154-2.49 5.438C8.233 9.715 7 11.5 7 13.5A5 5 0 0017 13c0-2.5-1.5-4-3-5.5S12 4 12 3z" />
-                            </svg>
-                        </div>
-                        <div class="text-sm font-semibold">Hot Deals</div>
+                    <div class="stackscroll-num" 
+                         data-num="{{ str_pad($step->step_number, 2, '0', STR_PAD_LEFT) }}">
+                        {{ str_pad($step->step_number, 2, '0', STR_PAD_LEFT) }}
                     </div>
 
-                  
-                    <div class="bg-blue-800 rounded-lg p-4 text-white text-center hover:scale-105 transition duration-200">
-                        <div class="flex justify-center mb-2">
-                            {{-- Heroicon Star --}}
-                            <svg xmlns="http://www.w3.org/2000/svg" 
-                                class="w-6 h-6 text-yellow-300" 
-                                fill="none" 
-                                viewBox="0 0 24 24" 
-                                stroke="currentColor" 
-                                stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" 
-                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l2.036 6.26h6.587c.969 0 1.371 1.24.588 1.81l-5.33 3.872 2.036 6.26c.3.921-.755 1.688-1.54 1.118L12 17.77l-5.328 3.877c-.785.57-1.84-.197-1.54-1.118l2.036-6.26-5.33-3.872c-.783-.57-.38-1.81.588-1.81h6.587l2.036-6.26z" />
-                            </svg>
-                        </div>
-                        <div class="text-sm font-semibold">Populer</div>
-                    </div>
+                    <div class="stackscroll-divider"></div>
+
+                    <h3 class="stackscroll-title">
+                        {{ $step->title }}
+                    </h3>
+
+                    <p class="stackscroll-desc">
+                        {!! $step->description !!}
+                    </p>
 
                 </div>
-
-            </div>
+            @endforeach
 
         </div>
-        <section class="max-w-7xl mx-auto px-6 mt-12">
 
-            <h2 class="text-2xl font-bold text-blue-700 mb-6">
+        <div class="stackscroll-hint" id="ss-hint">
+            <span>Scroll</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+                <polyline points="6 9 12 15 18 9"/>
+            </svg>
+        </div>
+
+    </div>
+</section>
+
+
+
+{{-- ===================== KATALOG ==================== --}}
+<section class="catalog-section max-w-7xl mx-auto px-6 md:px-12 py-20">
+
+    {{-- HEADER SECTION --}}
+    <div class="mb-14">
+        <h2 class="text-3xl md:text-4xl font-semibold mb-6 reveal">
+            Pilihan Kategori
+        </h2>
+
+        <div class="flex flex-wrap gap-3 reveal">
+            <a href="{{ request()->url() }}"
+               class="magnetic px-5 py-2 rounded-full text-sm font-medium transition
+               {{ request('kategori')
+                   ? 'bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white'
+                   : 'bg-blue-600 text-white shadow-md shadow-blue-400/30' }}">
+                Semua
+            </a>
+
+            @foreach ($categories as $item)
+                <a href="{{ request()->fullUrlWithQuery(['kategori' => $item->slug]) }}"
+                   class="magnetic px-5 py-2 rounded-full text-sm font-medium transition
+                   {{ request('kategori') == $item->slug
+                       ? 'bg-blue-600 text-white shadow-md shadow-blue-400/30'
+                       : 'bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white' }}">
+                    {{ $item->name }}
+                </a>
+            @endforeach
+        </div>
+    </div>
+
+
+    {{-- KATALOG HEADER --}}
+    @php
+        $activeCategory = request('kategori')
+            ? $categories->firstWhere('slug', request('kategori'))
+            : null;
+    @endphp
+
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-12 reveal">
+        <div>
+            <h2 class="text-3xl md:text-4xl font-semibold mb-3">
                 Daftar Lot Lelang
             </h2>
+            <p class="text-slate-500">
+                Menampilkan kategori:
+                <span class="font-semibold text-blue-600">
+                    {{ $activeCategory?->name ?? 'Semua' }}
+                </span>
+            </p>
+        </div>
+    </div>
 
-            <div class="max-w-7xl mx-auto px-6 py-10">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-                    @forelse($catalogs as $catalog)
-                        <x-catalog-card :catalog="$catalog" />
-                    @empty
-                        <div class="text-center py-20 text-gray-500">
-                            Tidak ada lot lelang tersedia.
-                        </div>
-                    @endforelse
-                </div>
+    {{-- GRID KATALOG --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+        @forelse($catalogs as $catalog)
+            <div class="reveal">
+                <x-catalog-card :catalog="$catalog" />
             </div>
-
-            <div class="mt-10">
-                {{ $catalogs->links() }}
+        @empty
+            <div class="col-span-full text-center py-24 text-slate-400">
+                Belum tersedia katalog lelang
             </div>
+        @endforelse
+    </div>
 
-        </section>
 
-    </section>
+    {{-- PAGINATION --}}
+    <div class="mt-16 flex justify-center">
+        {{ $catalogs->links() }}
+    </div>
+
+</section>
 
 
 @endsection

@@ -50,6 +50,11 @@ class CategoryResource extends Resource
                     'heroicon-o-building-storefront' => 'Store',
                     'heroicon-o-archive-box' => 'Archive',
                     'heroicon-o-globe-alt' => 'Globe',
+                    'heroicon-o-building-library' => 'Hall',
+                    'heroicon-o-building-office-2' => 'Appartment',
+                    'heroicon-o-globe-alt' => 'Truck',
+                    'heroicon-o-globe-alt' => 'home-modern',
+                    'heroicon-o-globe-alt' => 'Globe',
                 ])
                 ->searchable()
                 ->live()

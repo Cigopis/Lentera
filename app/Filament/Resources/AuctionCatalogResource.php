@@ -268,7 +268,7 @@ class AuctionCatalogResource extends Resource
                                                 '1:1',
                                             ])
                                             ->maxFiles(10)
-                                            ->required()
+                                            ->required(fn (string $operation) => $operation === 'create')
                                             ->getUploadedFileNameForStorageUsing(fn ($file) => Str::uuid() . '.webp')
                                             ->saveUploadedFileUsing(function ($file, $get, $state, $record) {
                                                 $manager = new ImageManager(new Driver());

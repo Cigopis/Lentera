@@ -74,6 +74,17 @@ class AuctionCatalog extends Model
         });
     }
 
+    public function scopeNotExpired($query)
+    {
+        return $query->where('auction_date', '>=', now()->toDateString());
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'active')
+                    ->where('auction_date', '>=', now()->toDateString());
+    }
+
     /**
      * Relasi ke Category
      */

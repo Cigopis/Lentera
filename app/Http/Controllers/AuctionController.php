@@ -12,12 +12,12 @@ class AuctionController extends Controller
     public function index(Request $request)
     {
         $catalogs = AuctionCatalog::query()
-        ->with(['city', 'primaryImage', 'category'])
-        ->where('status', 'active')
-        ->filter($request)
-        ->latest()
-        ->paginate(9)
-        ->withQueryString();
+            ->with(['city', 'primaryImage', 'category'])
+            ->published()  // aktif + belum expired
+            ->filter($request)
+            ->latest()
+            ->paginate(9)
+            ->withQueryString();
 
         $categories = Category::where('is_active', true)->get();
         $cities = City::where('is_active', true)->get();
@@ -27,5 +27,22 @@ class AuctionController extends Controller
             'categories',
             'cities'
         ));
+    }
+
+    public function show($slug)
+    {
+        $catalog = AuctionCatalog::with([
+            'city',
+            'category',
+            'catalogImages',
+            'primaryImage',
+            'specifications',
+            'facilities',
+        ])
+        ->where('slug', $slug)
+        ->published()  // aktif + belum expired
+        ->firstOrFail();
+
+        return view('pages.lelang.show', compact('catalog'));
     }
 }
