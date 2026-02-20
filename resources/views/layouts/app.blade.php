@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('app.name', 'Lentera') }}</title>
 
-    {{-- Paksa background terang sejak awal, sebelum CSS/JS load --}}
     <style>
         html, body { background-color: #f0f9ff !important; }
     </style>

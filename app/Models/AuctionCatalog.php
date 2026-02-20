@@ -153,11 +153,21 @@ class AuctionCatalog extends Model
 
     public function scopeFilter($query, $request)
     {
-        if ($request->filled('kategori')) {
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('slug', $request->kategori);
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhereHas('city', function ($cityQuery) use ($search) {
+                    $cityQuery->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('category', function ($catQuery) use ($search) {
+                    $catQuery->where('name', 'like', "%{$search}%");
+                });
             });
         }
+
 
         if ($request->filled('min')) {
             $query->where('reserve_price', '>=', (int) $request->min);
