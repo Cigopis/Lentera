@@ -11,7 +11,7 @@
     class="absolute right-60 top-full z-60"
 >
     <div class="w-80 
-                bg-white/90 backdrop-blur-xl backdrop-saturate-150
+                bg-white backdrop-blur-xl backdrop-saturate-150
                 rounded-2xl shadow-xl 
                 border border-white/40
                 p-5
