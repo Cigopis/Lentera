@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\City;
 use App\Models\Banners;
 use App\Models\GuideSteps;
+use Carbon\Carbon;
 
 class HomeController extends Controller
 {
@@ -20,24 +21,42 @@ class HomeController extends Controller
             ->latest()
             ->get();
 
-        $catalogs = AuctionCatalog::with(['city', 'primaryImage', 'category'])
-            ->published()  // aktif + belum expired
+        $heroBanners = Banners::where('is_active', true)
+            ->where('type', 'hero')
+            ->latest()
+            ->get();
 
+        $promoBanners = Banners::where('is_active', true)
+            ->where('type', 'promo')
+            ->latest()
+            ->get();
+
+
+        $today=carbon::now();
+        $catalogQuery = AuctionCatalog::with(['city', 'primaryImage', 'category'])
+            // ->published()
             ->when($request->kategori, function ($query, $slug) {
                 $query->whereHas('category', function ($q) use ($slug) {
                     $q->where('slug', $slug);
                 });
             })
+            ->where('auction_date', '>=', $today) 
+            ->orderBy('auction_date', 'asc'); 
 
-            ->latest()
-            ->paginate(9)
-            ->withQueryString();
+        $totalCatalogs = AuctionCatalog::published()->count();
+
+       $catalogs = (clone $catalogQuery)
+        ->latest()
+        ->take(4)
+        ->get();
 
         return view('pages.home', compact(
             'categories',
             'cities',
-            'banners',
+            'heroBanners',
+            'promoBanners',
             'catalogs',
+            'totalCatalogs',
             'guideSteps'
         ));
     }

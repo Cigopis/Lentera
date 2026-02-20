@@ -16,6 +16,11 @@ class Banners extends Model
         'catalog_id',
         'created_by',
         'is_active',
+        'type'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 
     public function catalog(): BelongsTo

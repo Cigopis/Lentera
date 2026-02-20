@@ -147,18 +147,18 @@
                     </p>
 
                     {{-- PRICE --}}
-                    <div class="grid grid-cols-2 gap-3 text-sm mb-3">
+                    <div class="grid grid-cols-2 gap-2 text-sm mb-3">
 
                         <div class="bg-blue-50 rounded-xl p-3">
                             <p class="text-slate-400 mb-1">Limit</p>
-                            <p class="text-blue-600 font-bold">
+                            <p class="text-blue-600 font-bold text-[12px]">
                                 {{ $catalog->formatted_reserve_price }}
                             </p>
                         </div>
 
                         <div class="bg-violet-50 rounded-xl p-3">
                             <p class="text-slate-400 mb-1">Jaminan</p>
-                            <p class="text-violet-600 font-bold">
+                            <p class="text-violet-600 font-bold text-[12px]">
                                 {{ $catalog->formatted_deposit_amount }}
                             </p>
                         </div>

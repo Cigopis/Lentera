@@ -480,7 +480,10 @@ document.addEventListener("DOMContentLoaded", function() {
 {{-- ===================== HERO ==================== --}}
 <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
 
-    <x-banner-slider :banners="$banners" />
+    @if($heroBanners->isNotEmpty())
+        <x-banner-slider :banners="$heroBanners" variant="hero" />
+    @endif
+
 
     <div class="absolute inset-0 pointer-events-none z-10">
         <div data-depth="0.2"
@@ -518,7 +521,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 {{-- ===================== STACK SCROLL ==================== --}}
-<section class="stackscroll-outer" id="cara-daftar">
+<section class="stackscroll-outer mb-20" id="cara-daftar">
     <div class="stackscroll-sticky">
 
         <div class="stackscroll-bg"></div>
@@ -592,35 +595,45 @@ document.addEventListener("DOMContentLoaded", function() {
 {{-- ===================== KATALOG ==================== --}}
 <section class="catalog-section max-w-7xl mx-auto px-6 md:px-12 py-20">
 
-    {{-- HEADER SECTION --}}
-    <div class="mb-14">
+    {{-- ================= HEADER ================= --}}
+    <div class="mb-16">
         <h2 class="text-3xl md:text-4xl font-semibold mb-6 reveal">
             Pilihan Kategori
         </h2>
 
         <div class="flex flex-wrap gap-3 reveal">
-            <a href="{{ request()->url() }}"
-               class="magnetic px-5 py-2 rounded-full text-sm font-medium transition
+
+            {{-- Semua --}}
+            <a href="{{ url()->current() }}"
+               class="px-5 py-2 rounded-full text-sm font-medium transition
                {{ request('kategori')
                    ? 'bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white'
                    : 'bg-blue-600 text-white shadow-md shadow-blue-400/30' }}">
                 Semua
             </a>
 
+            {{-- Loop kategori --}}
             @foreach ($categories as $item)
                 <a href="{{ request()->fullUrlWithQuery(['kategori' => $item->slug]) }}"
-                   class="magnetic px-5 py-2 rounded-full text-sm font-medium transition
+                   class="px-5 py-2 rounded-full text-sm font-medium transition
                    {{ request('kategori') == $item->slug
                        ? 'bg-blue-600 text-white shadow-md shadow-blue-400/30'
                        : 'bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white' }}">
                     {{ $item->name }}
                 </a>
             @endforeach
+
         </div>
     </div>
 
 
-    {{-- KATALOG HEADER --}}
+    {{-- ================= BANNER PROMO FULL WIDTH ================= --}}
+    <div class="relative w-screen left-1/2 -translate-x-1/2 mb-20">
+        <x-banner-slider :banners="$promoBanners" variant="promo" />
+    </div>
+
+
+    {{-- ================= HEADER KATALOG ================= --}}
     @php
         $activeCategory = request('kategori')
             ? $categories->firstWhere('slug', request('kategori'))
@@ -642,8 +655,9 @@ document.addEventListener("DOMContentLoaded", function() {
     </div>
 
 
-    {{-- GRID KATALOG --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+    {{-- ================= GRID KATALOG ================= --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+
         @forelse($catalogs as $catalog)
             <div class="reveal">
                 <x-catalog-card :catalog="$catalog" />
@@ -653,15 +667,34 @@ document.addEventListener("DOMContentLoaded", function() {
                 Belum tersedia katalog lelang
             </div>
         @endforelse
+
     </div>
 
 
-    {{-- PAGINATION --}}
-    <div class="mt-16 flex justify-center">
-        {{ $catalogs->links() }}
-    </div>
+    {{-- ================= BUTTON LIHAT LEBIH BANYAK ================= --}}
+    @if($totalCatalogs > 4)
+        <div class="mt-14 text-center">
+            <a href="{{ route('katalog.index', request()->only('kategori')) }}"
+               class="group inline-flex items-center gap-3 px-8 py-3 rounded-full 
+                      bg-gradient-to-r from-blue-600 to-blue-500
+                      text-white font-medium
+                      hover:scale-105 hover:shadow-xl hover:shadow-blue-500/30
+                      transition-all duration-300">
+
+                Lihat Lebih Banyak
+
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5l7 7-7 7" />
+                </svg>
+            </a>
+        </div>
+    @endif
 
 </section>
+
 
 
 @endsection

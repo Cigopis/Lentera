@@ -58,6 +58,17 @@ class BannersResource extends Resource
             ->required()
             ->inline(),
 
+            Toggle::make('is_active')
+                ->default(true),
+
+            Select::make('type')
+                ->label('Banner Type')
+                ->options([
+                    'hero'  => 'Hero Banner',
+                    'promo' => 'Promotional Banner',
+                ])
+                ->default('hero')
+                ->required(),
 
 
 
@@ -126,6 +137,11 @@ class BannersResource extends Resource
     {
         return $table
         ->columns([
+            TextColumn::make('type')
+            ->label('Banner Type')
+            ->badge()
+            ->color('primary'),
+
             ImageColumn::make('image_path')
                 ->label('Image'),
 
