@@ -3,7 +3,7 @@
     'layout' => 'horizontal'
 ])
 
-<a href="{{ route('auction.show', $catalog->slug) }}" 
+<a href="{{ route('lelang.show', $catalog->slug) }}" 
    class="group block relative overflow-hidden 
           bg-white
           border border-slate-200

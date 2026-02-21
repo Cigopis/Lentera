@@ -14,6 +14,7 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
+        
         $categories = Category::where('is_active', true)->get();
         $cities = City::where('is_active', true)->get();
         $guideSteps = GuideSteps::orderBy('step_number')->get();

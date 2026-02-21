@@ -55,19 +55,16 @@ class AuctionCatalog extends Model
         parent::boot();
 
         static::creating(function ($catalog) {
-            // Auto-generate slug if not provided
             if (empty($catalog->slug)) {
                 $catalog->slug = Str::slug($catalog->title);
             }
             
-            // Auto-set created_by to current user
             if (empty($catalog->created_by) && auth()->check()) {
                 $catalog->created_by = auth()->id();
             }
         });
 
         static::updating(function ($catalog) {
-            // Auto-update slug if title changed
             if ($catalog->isDirty('title')) {
                 $catalog->slug = Str::slug($catalog->title);
             }
@@ -85,49 +82,33 @@ class AuctionCatalog extends Model
                     ->where('auction_date', '>=', now()->toDateString());
     }
 
-    /**
-     * Relasi ke Category
-     */
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    /**
-     * Relasi ke SubCategory
-     */
     public function subCategory(): BelongsTo
     {
         return $this->belongsTo(SubCategory::class);
     }
 
-    /**
-     * Relasi ke City
-     */
+
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
     }
 
-    /**
-     * Relasi ke User (creator)
-     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /**
-     * Relasi ke CatalogImage
-     */
     public function catalogImages(): HasMany
     {
         return $this->hasMany(CatalogImage::class, 'catalog_id');
     }
 
-    /**
-     * Get primary image
-     */
     public function primaryImage()
     {
         return $this->hasOne(CatalogImage::class, 'catalog_id')
@@ -135,17 +116,11 @@ class AuctionCatalog extends Model
                     ->latest();
     }
 
-    /**
-     * Relasi ke AssetSpecification
-     */
     public function specifications(): HasOne
     {
         return $this->hasOne(AssetSpecification::class, 'catalog_id');
     }
 
-    /**
-     * Relasi ke AssetFacility
-     */
     public function facilities(): HasMany
     {
         return $this->hasMany(AssetFacility::class, 'catalog_id');
@@ -154,38 +129,39 @@ class AuctionCatalog extends Model
     public function scopeFilter($query, $request)
     {
         if ($request->filled('search')) {
-            $search = $request->search;
-
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%")
-                ->orWhereHas('city', function ($cityQuery) use ($search) {
-                    $cityQuery->where('name', 'like', "%{$search}%");
-                })
-                ->orWhereHas('category', function ($catQuery) use ($search) {
-                    $catQuery->where('name', 'like', "%{$search}%");
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                ->orWhere('description', 'like', '%' . $request->search . '%')
+                ->orWhere('address', 'like', '%' . $request->search . '%')
+                ->orWhereHas('category', function ($q2) use ($request) {
+                    $q2->where('name', 'like', '%' . $request->search . '%');
                 });
             });
         }
-
+        
+        if ($request->filled('kategori')) {
+            $query->whereHas('category', function ($q) use ($request) {
+                $q->where('slug', $request->kategori);
+            });
+        }
 
         if ($request->filled('min')) {
-            $query->where('reserve_price', '>=', (int) $request->min);
+            $query->where('reserve_price', '>=', (int) str_replace(['.', ','], ['', ''], $request->min));
         }
 
         if ($request->filled('max')) {
-            $query->where('reserve_price', '<=', (int) $request->max);
+            $query->where('reserve_price', '<=', (int) str_replace(['.', ','], ['', ''], $request->max));
         }
 
-        if ($request->has('kota')) {
-
-            $kota = array_filter((array) $request->kota);
-
-            if (!empty($kota)) {
-                $query->whereHas('city', function ($q) use ($kota) {
+        if ($request->filled('kota')) {
+            $kota = $request->kota;
+            $query->whereHas('city', function ($q) use ($kota) {
+                if (is_array($kota)) {
                     $q->whereIn('slug', $kota);
-                });
-            }
+                } else {
+                    $q->where('slug', $kota);
+                }
+            });
         }
 
         if ($request->filled('bulan')) {
@@ -195,43 +171,27 @@ class AuctionCatalog extends Model
         return $query;
     }
 
-
-    /**
-     * Relasi ke ActivityLog
-     */
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class, 'catalog_id');
     }
 
-    /**
-     * Scope untuk katalog aktif
-     */
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
     }
 
-    /**
-     * Scope untuk katalog unggulan
-     */
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true);
     }
 
-    /**
-     * Scope untuk katalog yang akan hilang (H-1 atau hari H)
-     */
     public function scopeExpiringToday($query)
     {
         return $query->whereDate('auction_date', '=', Carbon::today())
                      ->orWhereDate('auction_date', '=', Carbon::tomorrow());
     }
 
-    /**
-     * Scope untuk katalog minggu ini
-     */
     public function scopeUpcomingWeek($query)
     {
         return $query->whereBetween('auction_date', [
@@ -240,9 +200,6 @@ class AuctionCatalog extends Model
         ]);
     }
 
-    /**
-     * Check if catalog is expiring soon (H-1 or today)
-     */
     public function isExpiringSoon(): bool
     {
         if (!$this->auction_date) {
@@ -256,9 +213,6 @@ class AuctionCatalog extends Model
         return $daysLeft <= 1 && $daysLeft >= 0;
     }
 
-    /**
-     * Get days until auction
-     */
     public function getDaysUntilAuction(): ?int
     {
         if (!$this->auction_date) {
@@ -271,9 +225,6 @@ class AuctionCatalog extends Model
         return $now->diffInDays($auctionDate, false);
     }
 
-    /**
-     * Get deadline status
-     */
     public function getDeadlineStatus(): string
     {
         $daysLeft = $this->getDaysUntilAuction();
@@ -295,25 +246,16 @@ class AuctionCatalog extends Model
         }
     }
 
-    /**
-     * Get formatted price
-     */
     public function getFormattedReservePriceAttribute(): string
     {
         return 'Rp ' . number_format($this->reserve_price, 0, ',', '.');
     }
 
-    /**
-     * Get formatted deposit
-     */
     public function getFormattedDepositAmountAttribute(): string
     {
         return 'Rp ' . number_format($this->deposit_amount, 0, ',', '.');
     }
 
-    /**
-     * Get status badge color
-     */
     public function getStatusColorAttribute(): string
     {
         return match($this->status) {
@@ -324,9 +266,6 @@ class AuctionCatalog extends Model
         };
     }
 
-    /**
-     * Get status label
-     */
     public function getStatusLabelAttribute(): string
     {
         return match($this->status) {
