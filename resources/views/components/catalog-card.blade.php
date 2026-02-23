@@ -26,8 +26,8 @@
                 class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
             >
 
-            <div class="absolute top-3 right-3">
-                <span class="px-2 py-1 text-[11px] font-semibold rounded-full
+            <div class="absolute top-2 right-2">
+                <span class="px-1.5 py-0.5 md:px-2 md:py-1 text-[9px] md:text-[11px] font-semibold rounded-full
                     {{ $catalog->status == 'active' 
                         ? 'bg-emerald-100 text-emerald-600' 
                         : 'bg-slate-100 text-slate-500' }}">
@@ -37,38 +37,40 @@
         </div>
 
         {{-- CONTENT --}}
-        <div class="p-4 flex flex-col flex-1">
+        <div class="p-2 md:p-4 flex flex-col flex-1">
 
+
+            
             {{-- CATEGORY --}}
-            <span class="text-[11px] font-semibold text-blue-600 uppercase tracking-wide mb-1">
+            <span class="text-[9px] md:text-[11px] font-semibold text-blue-600 uppercase tracking-wide mb-0.5 md:mb-1">
                 {{ $catalog->category->name ?? 'Lentera' }}
             </span>
 
             {{-- TITLE --}}
-            <h3 class="text-sm md:text-base font-semibold text-slate-800 
-                       line-clamp-2 leading-snug mb-2 
+            <h3 class="text-[11px] md:text-base font-semibold text-slate-800 
+                       line-clamp-2 leading-snug mb-1 md:mb-2
                        group-hover:text-blue-600 transition">
                 {{ $catalog->title }}
             </h3>
 
             {{-- LOCATION --}}
-            <p class="text-xs text-slate-400 mb-3">
+            <p class="text-[9px] md:text-xs text-slate-400 mb-2 md:mb-3">
                 {{ $catalog->city->name }}
             </p>
 
             {{-- PRICE --}}
-            <div class="space-y-2 mb-4">
+            <div class="space-y-1 md:space-y-2 mb-2 md:mb-4">
 
-                <div class="bg-blue-50 rounded-xl px-3 py-2">
-                    <p class="text-[11px] text-slate-400">Limit</p>
-                    <p class="text-blue-600 font-semibold text-sm">
+                <div class="bg-blue-50 rounded-lg md:rounded-xl px-2 py-1 md:px-3 md:py-2">
+                    <p class="text-[8px] md:text-[11px] text-slate-400">Limit</p>
+                    <p class="text-blue-600 font-semibold text-[9px] md:text-sm leading-tight">
                         {{ $catalog->formatted_reserve_price }}
                     </p>
                 </div>
 
-                <div class="bg-violet-50 rounded-xl px-3 py-2">
-                    <p class="text-[11px] text-slate-400">Jaminan</p>
-                    <p class="text-violet-600 font-semibold text-sm">
+                <div class="bg-violet-50 rounded-lg md:rounded-xl px-2 py-1 md:px-3 md:py-2">
+                    <p class="text-[8px] md:text-[11px] text-slate-400">Jaminan</p>
+                    <p class="text-violet-600 font-semibold text-[9px] md:text-sm leading-tight">
                         {{ $catalog->formatted_deposit_amount }}
                     </p>
                 </div>
@@ -76,9 +78,11 @@
             </div>
 
             {{-- FOOTER --}}
-            <div class="mt-auto flex justify-between items-center text-xs text-slate-400">
-                <span>{{ $catalog->auction_date->format('d M Y') }}</span>
-                <span class="text-blue-600 font-medium group-hover:underline">
+            <div class="mt-auto flex justify-between items-center">
+                <span class="text-[8px] md:text-xs text-slate-400">
+                    {{ $catalog->auction_date->format('d M Y') }}
+                </span>
+                <span class="text-[9px] md:text-xs text-blue-600 font-medium group-hover:underline">
                     Detail →
                 </span>
             </div>

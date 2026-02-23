@@ -19,6 +19,180 @@
                 alert("Link berhasil disalin:\n" + url);
             }
         }
+
+        async function downloadBrosur() {
+            const canvas = document.getElementById('brosurCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Ukuran brosur (A5 landscape ratio)
+            canvas.width  = 1200;
+            canvas.height = 800;
+
+            // ===== BACKGROUND =====
+            const bg = ctx.createLinearGradient(0, 0, 1200, 800);
+            bg.addColorStop(0, '#1e3a8a');
+            bg.addColorStop(1, '#1e40af');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, 1200, 800);
+
+            // ===== ACCENT STRIP =====
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(0, 0, 8, 800);
+
+            // ===== LOAD GAMBAR UTAMA =====
+            const imgSrc = '{{ $catalog->primaryImage?->image_path ? asset("storage/".$catalog->primaryImage->image_path) : asset("img/default.jpg") }}';
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = imgSrc;
+            }).catch(() => {});
+
+            // Gambar foto di sisi kiri
+            if (img.complete && img.naturalWidth > 0) {
+                // Clip ke rounded rect
+                ctx.save();
+                roundRect(ctx, 40, 40, 520, 720, 16);
+                ctx.clip();
+                
+                // Cover fill
+                const scale = Math.max(520 / img.width, 720 / img.height);
+                const sw = img.width  * scale;
+                const sh = img.height * scale;
+                const sx = 40  + (520 - sw) / 2;
+                const sy = 40  + (720 - sh) / 2;
+                ctx.drawImage(img, sx, sy, sw, sh);
+                ctx.restore();
+            }
+
+            // Overlay gelap di foto
+            ctx.save();
+            roundRect(ctx, 40, 40, 520, 720, 16);
+            ctx.clip();
+            const overlay = ctx.createLinearGradient(40, 40, 560, 760);
+            overlay.addColorStop(0, 'rgba(0,0,0,0)');
+            overlay.addColorStop(1, 'rgba(0,0,0,0.4)');
+            ctx.fillStyle = overlay;
+            ctx.fillRect(40, 40, 520, 720);
+            ctx.restore();
+
+            // ===== KONTEN KANAN =====
+            const cx = 600; // x start konten kanan
+
+            // Badge status
+            ctx.fillStyle = '#10b981';
+            roundRect(ctx, cx, 50, 140, 36, 18);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('{{ $catalog->status_label }}', cx + 20, 73);
+
+            // Label LELANG
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.font = '13px sans-serif';
+            ctx.fillText('KATALOG LELANG', cx, 130);
+
+            // Judul
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 32px sans-serif';
+            const title = '{{ addslashes($catalog->title) }}';
+            wrapText(ctx, title, cx, 170, 560, 40);
+
+            // Garis pemisah
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, 270);
+            ctx.lineTo(cx + 560, 270);
+            ctx.stroke();
+
+            // Lokasi
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.font = '16px sans-serif';
+            ctx.fillText('📍 {{ addslashes($catalog->city->name) }}', cx, 305);
+
+            // Harga
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('NILAI LIMIT', cx, 360);
+
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 36px sans-serif';
+            ctx.fillText('{{ addslashes($catalog->formatted_reserve_price) }}', cx, 400);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('UANG JAMINAN', cx, 445);
+
+            ctx.fillStyle = '#93c5fd';
+            ctx.font = 'bold 28px sans-serif';
+            ctx.fillText('{{ addslashes($catalog->formatted_deposit_amount) }}', cx, 480);
+
+            // Tanggal
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('BATAS PENAWARAN', cx, 530);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillText('{{ $catalog->auction_date->format("d F Y") }} — 23.00 WIB', cx, 558);
+
+            // ===== FOOTER =====
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            ctx.fillRect(600, 680, 560, 80);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = 'bold 18px sans-serif';
+            ctx.fillText('Lentera Kertajaya', cx + 20, 715);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = '13px sans-serif';
+            ctx.fillText('lentera.id', cx + 20, 738);
+
+            @if($catalog->official_auction_url)
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('{{ addslashes($catalog->official_auction_url) }}', cx + 20, 755);
+            @endif
+
+            // ===== DOWNLOAD =====
+            const link = document.createElement('a');
+            link.download = 'brosur-{{ Str::slug($catalog->title) }}.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            for (let i = 0; i < words.length; i++) {
+                const test = line + words[i] + ' ';
+                if (ctx.measureText(test).width > maxWidth && i > 0) {
+                    ctx.fillText(line, x, y);
+                    line = words[i] + ' ';
+                    y += lineHeight;
+                } else {
+                    line = test;
+                }
+            }
+            ctx.fillText(line, x, y);
+        }
     </script>
 
     {{-- 
@@ -170,9 +344,19 @@
                         {{ $catalog->status_label }}
                     </span>
 
-                    @if($catalog->isExpiringSoon())
-                        <span class="px-3 py-1 text-xs rounded-full font-semibold bg-blue-100 text-blue-600">
-                            Open Bidding
+                    @php $daysLeft = $catalog->getDaysUntilAuction(); @endphp
+
+                    @if($daysLeft !== null && $daysLeft >= 0 && $daysLeft <= 7)
+                        <span class="px-3 py-1 text-xs rounded-full font-semibold
+                            {{ $daysLeft == 0 ? 'bg-red-100 text-red-600' : 
+                            ($daysLeft == 1 ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600') }}">
+                            @if($daysLeft == 0)
+                                HARI INI
+                            @elseif($daysLeft == 1)
+                                BESOK (H-1)
+                            @else
+                                {{ $daysLeft }} hari lagi
+                            @endif
                         </span>
                     @endif
                 </div>
@@ -248,14 +432,15 @@
                     </button>
 
                     {{-- DOWNLOAD BROSUR --}}
-                    @if($catalog->official_auction_url)
-                        <a href="{{ $catalog->official_auction_url }}"
-                           target="_blank"
-                           class="flex items-center justify-center gap-2 flex-1 border border-slate-300 py-2 rounded-xl text-sm font-medium text-center hover:bg-slate-50 transition">
-                            <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
-                            Unduh Brosur
-                        </a>
-                    @endif
+                    <button
+                        onclick="downloadBrosur()"
+                        class="flex items-center justify-center gap-2 flex-1 border border-slate-300 py-2 rounded-xl text-sm font-medium text-center hover:bg-slate-50 transition">
+                        <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
+                        Unduh Brosur
+                    </button>
+
+                    {{-- Hidden canvas untuk generate brosur --}}
+                    <canvas id="brosurCanvas" style="display:none"></canvas>
                 </div>
 
                 <a href="https://wa.me/6285731599031?text=Saya%20tertarik%20dengan%20aset%20{{ urlencode($catalog->title) }}"

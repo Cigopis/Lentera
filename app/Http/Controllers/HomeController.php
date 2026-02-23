@@ -8,13 +8,19 @@ use App\Models\Category;
 use App\Models\City;
 use App\Models\Banners;
 use App\Models\GuideSteps;
+use App\Models\SystemSetting;
 use Carbon\Carbon;
 
 class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        
+        $heroTitle = SystemSetting::where('setting_key', 'titleHero')->value('setting_value') 
+            ?? 'E-Katalog Lentera Kertajaya';
+
+        $heroDescription = SystemSetting::where('setting_key', 'descriptionHero')->value('setting_value') 
+            ?? 'Pusat informasi aset lelang terpadu yang membantu Anda melihat peluang dengan lebih jelas dan terarah.';
+
         $categories = Category::where('is_active', true)->get();
         $cities = City::where('is_active', true)->get();
         $guideSteps = GuideSteps::orderBy('step_number')->get();
@@ -52,6 +58,8 @@ class HomeController extends Controller
         ->get();
 
         return view('pages.home', compact(
+            'heroTitle',
+            'heroDescription',
             'categories',
             'cities',
             'heroBanners',

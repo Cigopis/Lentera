@@ -3,7 +3,10 @@
 @section('content')
 
 <style>
-html, body { background-color: #f0f9ff !important; }
+html, body { background-color: #f0f9ff !important;
+             overflow-x: clip; 
+
+}
 
 /* GLOBAL BACKGROUND */
 body::before {
@@ -501,11 +504,12 @@ document.addEventListener("DOMContentLoaded", function() {
          x-transition:enter-start="opacity-0 translate-y-10 blur-xl"
          x-transition:enter-end="opacity-100 translate-y-0 blur-0">
         <h1 class="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-            E-Katalog Lentera Kertajaya
+            {{ $heroTitle }}
         </h1>
         <p class="mt-6 text-lg max-w-xl mx-auto">
-            Pusat informasi aset lelang terpadu yang membantu Anda melihat peluang dengan lebih jelas dan terarah.
+            {{ $heroDescription }}
         </p>
+
         <div class="mt-10">
             <a href="{{ route('katalog.index') }}""
                class="magnetic inline-block px-10 py-4 rounded-full
@@ -627,10 +631,11 @@ document.addEventListener("DOMContentLoaded", function() {
     </div>
 
 
-    {{-- ================= BANNER PROMO FULL WIDTH ================= --}}
-    <div class="relative w-screen left-1/2 -translate-x-1/2 mb-20">
+    @if($promoBanners->isNotEmpty())
+    <div class="relative w-screen left-1/2 -translate-x-1/2 mb-16">
         <x-banner-slider :banners="$promoBanners" variant="promo" />
     </div>
+    @endif
 
 
     {{-- ================= HEADER KATALOG ================= --}}
@@ -656,11 +661,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
     {{-- ================= GRID KATALOG ================= --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
 
         @forelse($catalogs as $catalog)
             <div class="reveal">
-                <x-catalog-card :catalog="$catalog" />
+                <x-catalog-card :catalog="$catalog" layout="vertical" />
             </div>
         @empty
             <div class="col-span-full text-center py-24 text-slate-400">
