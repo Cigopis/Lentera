@@ -359,34 +359,63 @@ body::before {
 .catalog-section          { background: #f8fafc; }
 .catalog-section h2       { color: #0f172a; }
 .catalog-section p        { color: #64748b; }
+
+/* ============================================
+   PROMO BANNER SLIDER FIX
+   — semua slide pakai position:absolute agar
+     tidak numpuk ketika transisi
+   ============================================ */
+.promo-slider-wrap {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    /* tinggi akan diset via JS sesuai banner pertama */
+}
+.promo-slider-wrap .promo-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+}
+.promo-slider-wrap .promo-slide.active {
+    position: relative; /* hanya slide aktif yg ambil ruang */
+    opacity: 1;
+    pointer-events: auto;
+}
 </style>
 
 <script>
 /* =====================================================
-   FIX: back/forward navigation — bfcache scroll reset
+   FIX BUG 1 — scroll auto ke atas
+   Masalah asal: scrollRestoration=manual + scrollTo(0)
+   dipanggil SETIAP load, bukan hanya bfcache.
+   Fix: scrollTo(0) HANYA saat bfcache (e.persisted).
    ===================================================== */
 if ('scrollRestoration' in history) {
-    history.scrollRestoration = 'manual';
+    history.scrollRestoration = 'auto'; /* biarkan browser handle normal */
 }
 
 window.addEventListener('pageshow', function(e) {
+    /* Hanya reset scroll saat halaman dipulihkan dari bfcache */
     if (e.persisted) {
         window.scrollTo({ top: 0, behavior: 'instant' });
-        setTimeout(function() {
-            window.dispatchEvent(new Event('scroll'));
-        }, 80);
+        /* Trigger scroll event SETELAH posisi benar-benar di atas */
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                window.dispatchEvent(new Event('scroll'));
+            });
+        });
     }
 });
 
-if (!window.location.hash) {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-}
+/* HAPUS: if (!window.location.hash) scrollTo(0) — ini penyebab bug scroll ke atas */
 
 document.addEventListener("DOMContentLoaded", function() {
 
     /* ===== Scroll Reveal ===== */
     var reveals = document.querySelectorAll(".reveal");
-    var observer = new IntersectionObserver(function(entries) {
+    var revealObserver = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
             if (entry.isIntersecting) {
                 entry.target.classList.add("active");
@@ -395,7 +424,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }, { threshold: 0.15 });
-    reveals.forEach(function(el) { observer.observe(el); });
+    reveals.forEach(function(el) { revealObserver.observe(el); });
 
     /* ===== Magnetic Hover ===== */
     document.querySelectorAll(".magnetic").forEach(function(btn) {
@@ -416,7 +445,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.querySelectorAll("[data-depth]").forEach(function(el) {
             el.style.transform = "translateY(" + (offset * el.dataset.depth) + "px)";
         });
-    });
+    }, { passive: true });
 
     /* ===== Stack Scroll ===== */
     (function() {
@@ -429,9 +458,9 @@ document.addEventListener("DOMContentLoaded", function() {
         var hint  = document.getElementById('ss-hint');
         var glow  = document.getElementById('ss-glow');
 
-        var TOTAL       = steps.length;
-        var current     = -1;
-        var glowColors  = ['s1','s2','s3'];
+        var TOTAL      = steps.length;
+        var current    = -1;
+        var glowColors = ['s1','s2','s3'];
 
         function setStep(idx) {
             if (idx === current) return;
@@ -473,6 +502,79 @@ document.addEventListener("DOMContentLoaded", function() {
         onScroll();
     })();
 
+    /* =====================================================
+       FIX BUG 2 — Banner numpuk saat transisi
+       Cara kerja:
+       - Semua slide pakai position:absolute (opacity:0)
+       - Slide aktif diubah ke position:relative (opacity:1)
+         agar parent punya tinggi yang benar
+       - Transisi opacity smooth, tidak ada layout jump
+       ===================================================== */
+    document.querySelectorAll('.promo-slider-wrap').forEach(function(wrap) {
+        var slides = wrap.querySelectorAll('.promo-slide');
+        if (slides.length <= 1) return;
+
+        var current = 0;
+        var isTransitioning = false;
+
+        function goTo(next) {
+            if (isTransitioning || next === current) return;
+            isTransitioning = true;
+
+            var prev = current;
+            current  = next;
+
+            /* 1. Buat slide baru absolute+opacity:0 dulu (pre-position) */
+            slides[next].style.position = 'absolute';
+            slides[next].style.opacity  = '0';
+            slides[next].classList.add('active');
+
+            /* 2. Fade in slide baru */
+            requestAnimationFrame(function() {
+                slides[next].style.opacity = '1';
+
+                /* 3. Setelah transisi selesai, baru ganti ke relative */
+                setTimeout(function() {
+                    /* Slide lama: sembunyikan */
+                    slides[prev].style.position = 'absolute';
+                    slides[prev].style.opacity  = '0';
+                    slides[prev].classList.remove('active');
+
+                    /* Slide baru: ambil ruang normal */
+                    slides[next].style.position = 'relative';
+
+                    isTransitioning = false;
+                }, 650); /* harus >= durasi transisi CSS (0.6s) */
+            });
+        }
+
+        /* Auto-play */
+        var timer = setInterval(function() {
+            goTo((current + 1) % slides.length);
+        }, 4000);
+
+        /* Init: pastikan slide pertama relative, sisanya absolute */
+        slides.forEach(function(slide, i) {
+            if (i === 0) {
+                slide.style.position = 'relative';
+                slide.style.opacity  = '1';
+                slide.classList.add('active');
+            } else {
+                slide.style.position = 'absolute';
+                slide.style.opacity  = '0';
+                slide.classList.remove('active');
+            }
+        });
+
+        /* Pause on hover */
+        wrap.addEventListener('mouseenter', function() { clearInterval(timer); });
+        wrap.addEventListener('mouseleave', function() {
+            timer = setInterval(function() {
+                goTo((current + 1) % slides.length);
+            }, 4000);
+        });
+    });
+
 });
 </script>
 
@@ -483,7 +585,6 @@ document.addEventListener("DOMContentLoaded", function() {
     @if($heroBanners->isNotEmpty())
         <x-banner-slider :banners="$heroBanners" variant="hero" />
     @endif
-
 
     <div class="absolute inset-0 pointer-events-none z-10">
         <div data-depth="0.2"
@@ -507,7 +608,7 @@ document.addEventListener("DOMContentLoaded", function() {
             Pusat informasi aset lelang terpadu yang membantu Anda melihat peluang dengan lebih jelas dan terarah.
         </p>
         <div class="mt-10">
-            <a href="{{ route('katalog.index') }}""
+            <a href="{{ route('katalog.index') }}"
                class="magnetic inline-block px-10 py-4 rounded-full
                       bg-blue-600 text-white font-semibold
                       shadow-lg shadow-blue-400/30
@@ -533,7 +634,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         <div class="stackscroll-section-header pt-14">
             <p class="stackscroll-section-eyebrow">Cara Kerja</p>
-            <h2 class="stackscroll-section-title">Panduan Alur Lentera </h2>
+            <h2 class="stackscroll-section-title">Panduan Alur Lentera</h2>
         </div>
 
         {{-- PROGRESS BAR --}}
@@ -542,7 +643,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             <div class="stackscroll-dots">
                 @foreach($guideSteps as $index => $step)
-                    <div class="stackscroll-dot {{ $loop->first ? 'active' : '' }}" 
+                    <div class="stackscroll-dot {{ $loop->first ? 'active' : '' }}"
                          data-dot="{{ $index }}">
                     </div>
                 @endforeach
@@ -553,14 +654,14 @@ document.addEventListener("DOMContentLoaded", function() {
         <div class="stackscroll-content" style="position:relative; height:340px;">
 
             @foreach($guideSteps as $index => $step)
-                <div class="stackscroll-step {{ $loop->first ? 'active' : '' }}" 
+                <div class="stackscroll-step {{ $loop->first ? 'active' : '' }}"
                      data-step="{{ $index }}">
 
                     <div class="stackscroll-badge">
                         Langkah {{ $step->step_number }}
                     </div>
 
-                    <div class="stackscroll-num" 
+                    <div class="stackscroll-num"
                          data-num="{{ str_pad($step->step_number, 2, '0', STR_PAD_LEFT) }}">
                         {{ str_pad($step->step_number, 2, '0', STR_PAD_LEFT) }}
                     </div>
@@ -589,7 +690,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     </div>
 </section>
-
 
 
 {{-- ===================== KATALOG ==================== --}}
@@ -628,8 +728,16 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
     {{-- ================= BANNER PROMO FULL WIDTH ================= --}}
+    {{--
+        FIX BUG 2: Bungkus banner promo dengan .promo-slider-wrap
+        agar JS slider di atas bisa mengontrol transisi dengan benar.
+        Pastikan x-banner-slider component menambahkan class .promo-slide
+        ke setiap slide item-nya, atau gunakan wrapper di bawah ini.
+    --}}
     <div class="relative w-screen left-1/2 -translate-x-1/2 mb-20">
-        <x-banner-slider :banners="$promoBanners" variant="promo" />
+        <div class="promo-slider-wrap">
+            <x-banner-slider :banners="$promoBanners" variant="promo" />
+        </div>
     </div>
 
 
@@ -675,7 +783,7 @@ document.addEventListener("DOMContentLoaded", function() {
     @if($totalCatalogs > 4)
         <div class="mt-14 text-center">
             <a href="{{ route('katalog.index', request()->only('kategori')) }}"
-               class="group inline-flex items-center gap-3 px-8 py-3 rounded-full 
+               class="group inline-flex items-center gap-3 px-8 py-3 rounded-full
                       bg-gradient-to-r from-blue-600 to-blue-500
                       text-white font-medium
                       hover:scale-105 hover:shadow-xl hover:shadow-blue-500/30
@@ -694,7 +802,5 @@ document.addEventListener("DOMContentLoaded", function() {
     @endif
 
 </section>
-
-
 
 @endsection
