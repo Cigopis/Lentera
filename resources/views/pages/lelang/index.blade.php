@@ -59,13 +59,13 @@
     </div>
 
 
-    {{-- GRID KATALOG MARKETPLACE STYLE --}}
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8 items-stretch">
+    {{-- GRID KATALOG --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
 
         @forelse($catalogs as $catalog)
 
             <div class="h-full">
-                <x-catalog-card :catalog="$catalog" layout="vertical" />
+                <x-catalog-card :catalog="$catalog" layout="horizontal" />
             </div>
 
         @empty
