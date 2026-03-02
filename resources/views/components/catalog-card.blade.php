@@ -18,14 +18,46 @@
         {{-- ================= VERTICAL (MARKETPLACE STYLE) ================= --}}
         
         {{-- IMAGE --}}
-        <div class="relative aspect-[4/3] overflow-hidden">
-            <img 
-                src="{{ $catalog->primaryImage?->image_path 
-                    ? asset('storage/'.$catalog->primaryImage->image_path) 
-                    : asset('img/default.jpg') }}"
-                class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
-            >
+        <div class="relative overflow-hidden rounded-t-2xl md:rounded-t-3xl">
+            <div class="grid gap-0.5 bg-slate-100" style="grid-template-columns: 2fr 1fr; height: 200px;">
 
+                {{-- FOTO UTAMA (KIRI) --}}
+                <div class="relative overflow-hidden">
+                    <img 
+                        src="{{ $catalog->primaryImage?->image_path 
+                            ? asset('storage/'.$catalog->primaryImage->image_path) 
+                            : asset('img/default.jpg') }}"
+                        class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                    >
+                </div>
+
+                {{-- 3 FOTO KECIL (KANAN) --}}
+                <div class="grid grid-rows-3 gap-0.5">
+                    @for($i = 1; $i <= 3; $i++)
+                        @php $image = $catalog->catalogImages->get($i); @endphp
+                        <div class="relative overflow-hidden">
+                            @if($image)
+                                <img 
+                                    src="{{ asset('storage/'.$image->image_path) }}"
+                                    class="w-full h-full object-cover"
+                                >
+                                @if($i == 3 && $catalog->catalogImages->count() > 4)
+                                    <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                        <span class="text-white text-[10px] md:text-xs font-bold">
+                                            +{{ $catalog->catalogImages->count() - 4 }} foto
+                                        </span>
+                                    </div>
+                                @endif
+                            @else
+                                <div class="w-full h-full bg-slate-200"></div>
+                            @endif
+                        </div>
+                    @endfor
+                </div>
+
+            </div>
+
+            {{-- STATUS BADGE --}}
             <div class="absolute top-2 right-2">
                 <span class="px-1.5 py-0.5 md:px-2 md:py-1 text-[9px] md:text-[11px] font-semibold rounded-full
                     {{ $catalog->status == 'active' 
@@ -39,8 +71,6 @@
         {{-- CONTENT --}}
         <div class="p-2 md:p-4 flex flex-col flex-1">
 
-
-            
             {{-- CATEGORY --}}
             <span class="text-[9px] md:text-[11px] font-semibold text-blue-600 uppercase tracking-wide mb-0.5 md:mb-1">
                 {{ $catalog->category->name ?? 'Lentera' }}
@@ -59,7 +89,7 @@
             </p>
 
             {{-- PRICE --}}
-            <div class="space-y-1 md:space-y-2 mb-2 md:mb-4">
+            <div class="space-y-1 md:space-y-2 mb-2 md:mb-3">
 
                 <div class="bg-blue-50 rounded-lg md:rounded-xl px-2 py-1 md:px-3 md:py-2">
                     <p class="text-[8px] md:text-[11px] text-slate-400">Limit</p>
@@ -77,8 +107,24 @@
 
             </div>
 
+            {{-- TANGGAL LELANG --}}
+            <div class="space-y-1 mb-2 md:mb-3">
+                <div class="flex justify-between items-center">
+                    <p class="text-[8px] md:text-[11px] text-slate-400">Batas Setor Jaminan</p>
+                    <p class="text-[8px] md:text-[11px] font-medium text-slate-600">
+                        {{ $catalog->auction_date->subDay()->format('d M Y') }}
+                    </p>
+                </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-[8px] md:text-[11px] text-slate-400">Batas Penawaran</p>
+                    <p class="text-[8px] md:text-[11px] font-medium text-slate-600">
+                        {{ $catalog->auction_date->format('d M Y') }}
+                    </p>
+                </div>
+            </div>
+
             {{-- FOOTER --}}
-            <div class="mt-auto flex justify-between items-center">
+            <div class="mt-auto flex justify-between items-center pt-1 md:pt-2 border-t border-slate-100">
                 <span class="text-[8px] md:text-xs text-slate-400">
                     {{ $catalog->auction_date->format('d M Y') }}
                 </span>
