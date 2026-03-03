@@ -24,22 +24,18 @@
             const canvas = document.getElementById('brosurCanvas');
             const ctx = canvas.getContext('2d');
 
-            // Ukuran brosur (A5 landscape ratio)
             canvas.width  = 1200;
             canvas.height = 800;
 
-            // ===== BACKGROUND =====
             const bg = ctx.createLinearGradient(0, 0, 1200, 800);
             bg.addColorStop(0, '#1e3a8a');
             bg.addColorStop(1, '#1e40af');
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, 1200, 800);
 
-            // ===== ACCENT STRIP =====
             ctx.fillStyle = '#f59e0b';
             ctx.fillRect(0, 0, 8, 800);
 
-            // ===== LOAD GAMBAR UTAMA =====
             const imgSrc = '{{ $catalog->primaryImage?->image_path ? asset("storage/".$catalog->primaryImage->image_path) : asset("img/default.jpg") }}';
             const img = new Image();
             img.crossOrigin = 'anonymous';
@@ -50,14 +46,11 @@
                 img.src = imgSrc;
             }).catch(() => {});
 
-            // Gambar foto di sisi kiri
             if (img.complete && img.naturalWidth > 0) {
-                // Clip ke rounded rect
                 ctx.save();
                 roundRect(ctx, 40, 40, 520, 720, 16);
                 ctx.clip();
                 
-                // Cover fill
                 const scale = Math.max(520 / img.width, 720 / img.height);
                 const sw = img.width  * scale;
                 const sh = img.height * scale;
@@ -67,7 +60,6 @@
                 ctx.restore();
             }
 
-            // Overlay gelap di foto
             ctx.save();
             roundRect(ctx, 40, 40, 520, 720, 16);
             ctx.clip();
@@ -78,10 +70,8 @@
             ctx.fillRect(40, 40, 520, 720);
             ctx.restore();
 
-            // ===== KONTEN KANAN =====
-            const cx = 600; // x start konten kanan
+            const cx = 600;
 
-            // Badge status
             ctx.fillStyle = '#10b981';
             roundRect(ctx, cx, 50, 140, 36, 18);
             ctx.fill();
@@ -89,18 +79,15 @@
             ctx.font = 'bold 14px sans-serif';
             ctx.fillText('{{ $catalog->status_label }}', cx + 20, 73);
 
-            // Label LELANG
             ctx.fillStyle = 'rgba(255,255,255,0.3)';
             ctx.font = '13px sans-serif';
             ctx.fillText('KATALOG LELANG', cx, 130);
 
-            // Judul
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 32px sans-serif';
             const title = '{{ addslashes($catalog->title) }}';
             wrapText(ctx, title, cx, 170, 560, 40);
 
-            // Garis pemisah
             ctx.strokeStyle = '#f59e0b';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -108,12 +95,10 @@
             ctx.lineTo(cx + 560, 270);
             ctx.stroke();
 
-            // Lokasi
             ctx.fillStyle = 'rgba(255,255,255,0.7)';
             ctx.font = '16px sans-serif';
             ctx.fillText('📍 {{ addslashes($catalog->city->name) }}', cx, 305);
 
-            // Harga
             ctx.fillStyle = 'rgba(255,255,255,0.6)';
             ctx.font = '14px sans-serif';
             ctx.fillText('NILAI LIMIT', cx, 360);
@@ -130,7 +115,6 @@
             ctx.font = 'bold 28px sans-serif';
             ctx.fillText('{{ addslashes($catalog->formatted_deposit_amount) }}', cx, 480);
 
-            // Tanggal
             ctx.fillStyle = 'rgba(255,255,255,0.6)';
             ctx.font = '14px sans-serif';
             ctx.fillText('BATAS PENAWARAN', cx, 530);
@@ -139,7 +123,6 @@
             ctx.font = 'bold 20px sans-serif';
             ctx.fillText('{{ $catalog->auction_date->format("d F Y") }} — 23.00 WIB', cx, 558);
 
-            // ===== FOOTER =====
             ctx.fillStyle = 'rgba(255,255,255,0.08)';
             ctx.fillRect(600, 680, 560, 80);
 
@@ -157,7 +140,6 @@
             ctx.fillText('{{ addslashes($catalog->official_auction_url) }}', cx + 20, 755);
             @endif
 
-            // ===== DOWNLOAD =====
             const link = document.createElement('a');
             link.download = 'brosur-{{ Str::slug($catalog->title) }}.png';
             link.href = canvas.toDataURL('image/png');
@@ -195,15 +177,9 @@
         }
     </script>
 
-    {{-- 
-        Grid Layout - URUTAN YANG BENAR:
-        Mobile: Gallery(1) → Sidebar(2) → Success(2.6) → Deskripsi(3) → Spesifikasi(4) → Fasilitas(5) → Upload(6)
-        Desktop: kiri col-span-2 (Gallery, Deskripsi, Spesifikasi, Fasilitas, Upload) | kanan (Sidebar sticky)
-    --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
 
         {{-- ================= GALLERY ================= --}}
-        {{-- Mobile: order 1 | Desktop: col-span-2 row 1 --}}
         <div class="lg:col-span-2 order-1"
             x-data="{ 
                 images: [
@@ -229,7 +205,6 @@
             }"
             class="bg-white border border-slate-200 rounded-2xl p-4"
         >
-            {{-- MAIN IMAGE with arrows --}}
             <div class="relative overflow-hidden rounded-xl mb-4 cursor-pointer group"
                  @click="open = true">
                 <img :src="selectedImage"
@@ -237,7 +212,6 @@
 
                 <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none"></div>
 
-                {{-- PREV BUTTON --}}
                 <button
                     @click.stop="prev()"
                     class="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm shadow-md hover:bg-white transition opacity-0 group-hover:opacity-100"
@@ -248,7 +222,6 @@
                     </svg>
                 </button>
 
-                {{-- NEXT BUTTON --}}
                 <button
                     @click.stop="next()"
                     class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm shadow-md hover:bg-white transition opacity-0 group-hover:opacity-100"
@@ -259,14 +232,12 @@
                     </svg>
                 </button>
 
-                {{-- IMAGE COUNTER --}}
                 <div class="absolute bottom-3 right-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm"
                      x-show="images.length > 1">
                     <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
                 </div>
             </div>
 
-            {{-- THUMBNAILS --}}
             <div class="grid grid-cols-4 gap-3">
                 @foreach($catalog->catalogImages as $index => $image)
                     <div 
@@ -282,7 +253,6 @@
                 @endforeach
             </div>
 
-            {{-- SHOW MORE BUTTON --}}
             @if($catalog->catalogImages->count() > 4)
                 <div class="text-center mt-4">
                     <button @click="showAll = !showAll"
@@ -293,7 +263,6 @@
                 </div>
             @endif
 
-            {{-- POPUP MODAL --}}
             <div x-show="open"
                 x-transition.opacity
                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
@@ -305,7 +274,6 @@
                     <img :src="selectedImage"
                         class="w-full h-auto max-h-[85vh] object-contain rounded-2xl shadow-2xl">
 
-                    {{-- PREV in modal --}}
                     <button @click="prev()"
                             class="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 transition text-white"
                             x-show="currentIndex > 0">
@@ -314,7 +282,6 @@
                         </svg>
                     </button>
 
-                    {{-- NEXT in modal --}}
                     <button @click="next()"
                             class="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 transition text-white"
                             x-show="currentIndex < images.length - 1">
@@ -334,11 +301,9 @@
         {{-- ================= END GALLERY ================= --}}
 
         {{-- ================= RIGHT SIDEBAR ================= --}}
-        {{-- Mobile: order 2 (setelah gallery) | Desktop: col kanan, membentang ke bawah --}}
         <div class="order-2 lg:row-span-6">
             <div class="bg-white border border-slate-200 rounded-2xl p-6 sticky top-24 shadow-md">
 
-                {{-- STATUS BADGE --}}
                 <div class="flex flex-wrap gap-2 mb-4">
                     <span class="px-3 py-1 text-xs rounded-full font-semibold bg-emerald-100 text-emerald-600">
                         {{ $catalog->status_label }}
@@ -360,12 +325,10 @@
                     {{ $catalog->city->name }}
                 </p>
 
-                {{-- JUDUL --}}
                 <h1 class="text-lg md:text-xl font-semibold text-slate-800 mb-4 leading-snug">
                     {{ $catalog->title }}
                 </h1>
 
-                {{-- SHM / INFO TAMBAHAN --}}
                 @if($catalog->shop_number)
                 <div class="flex flex-col gap-1 mb-6">
                     <p class="text-sm text-slate-400">Bukti Kepemilikan</p>
@@ -375,7 +338,6 @@
                 </div>
                 @endif
 
-                {{-- NILAI LIMIT --}}
                 <div class="mb-4">
                     <p class="text-sm text-slate-400">Nilai limit</p>
                     <p class="text-2xl font-bold text-red-600">
@@ -383,7 +345,6 @@
                     </p>
                 </div>
 
-                {{-- UANG JAMINAN --}}
                 <div class="mb-4">
                     <p class="text-sm text-slate-400">Uang Jaminan</p>
                     <p class="text-xl font-bold text-blue-600">
@@ -391,7 +352,6 @@
                     </p>
                 </div>
 
-                {{-- BATAS WAKTU --}}
                 <div class="mb-6 space-y-2 text-sm text-slate-600">
                     <div>
                         <p class="text-slate-400">Batas Akhir Setor Uang Jaminan</p>
@@ -408,7 +368,6 @@
                     </div>
                 </div>
 
-                {{-- BUTTON AKSES LELANG --}}
                 @if($catalog->official_auction_url)
                 <a href="{{ $catalog->official_auction_url }}" target="_blank"
                    class="block w-full bg-blue-700 text-white text-center py-3 rounded-xl font-semibold hover:bg-blue-800 transition mb-4">
@@ -417,7 +376,6 @@
                 @endif
 
                 <div class="flex gap-3 mb-4">
-                    {{-- SHARE BUTTON --}}
                     <button
                         onclick="shareCatalog()"
                         class="flex items-center justify-center gap-2 flex-1 border border-slate-300 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 transition">
@@ -425,7 +383,6 @@
                         Bagikan
                     </button>
 
-                    {{-- DOWNLOAD BROSUR --}}
                     <button
                         onclick="downloadBrosur()"
                         class="flex items-center justify-center gap-2 flex-1 border border-slate-300 py-2 rounded-xl text-sm font-medium text-center hover:bg-slate-50 transition">
@@ -433,7 +390,6 @@
                         Unduh Brosur
                     </button>
 
-                    {{-- Hidden canvas untuk generate brosur --}}
                     <canvas id="brosurCanvas" style="display:none"></canvas>
                 </div>
 
@@ -469,7 +425,6 @@
         @endif
 
         {{-- ================= DESKRIPSI ================= --}}
-        {{-- Mobile: order 3 | Desktop: col-span-2 --}}
         <div class="lg:col-span-2 order-3 bg-white border border-slate-200 rounded-2xl p-6">
             <h3 class="text-base font-bold text-slate-800 mb-3">Deskripsi Aset</h3>
             <div class="text-slate-500 text-sm leading-relaxed">
@@ -478,7 +433,6 @@
         </div>
 
         {{-- ================= SPESIFIKASI ================= --}}
-        {{-- Mobile: order 4 | Desktop: col-span-2 --}}
         @if($catalog->land_area || $catalog->building_area || $catalog->bedrooms || $catalog->bathrooms || $catalog->floors)
         <div class="lg:col-span-2 order-4 bg-white border border-slate-200 rounded-2xl p-6">
             <h3 class="text-base font-bold text-slate-800 mb-4">Spesifikasi Aset</h3>
@@ -533,7 +487,6 @@
         @endif
 
         {{-- ================= FASILITAS ================= --}}
-        {{-- Mobile: order 5 | Desktop: col-span-2 --}}
         @if($catalog->facilities->count())
         <div class="lg:col-span-2 order-5 bg-white border border-slate-200 rounded-2xl p-6">
             <h3 class="text-base font-bold text-slate-800 mb-4">Akses & Fasilitas</h3>
@@ -550,7 +503,6 @@
         @endif
 
         {{-- ================= UPLOAD BUKTI PEMBAYARAN ================= --}}
-        {{-- Mobile: order 6 | Desktop: col-span-2 --}}
         <div class="lg:col-span-2 order-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-6 md:p-8" 
              x-data="{ 
                  showUpload: false, 
@@ -558,7 +510,6 @@
                  showInfo: true 
              }">
             
-            {{-- INFO HEADER --}}
             <div class="flex items-start gap-4 mb-6">
                 <div class="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -576,7 +527,6 @@
                 </div>
             </div>
 
-            {{-- PANDUAN SINGKAT --}}
             <div x-show="showInfo" 
                  x-transition
                  class="bg-white rounded-xl p-5 mb-6 border border-blue-100">
@@ -639,7 +589,6 @@
                 </div>
             </div>
 
-            {{-- UPLOAD BUTTON --}}
             <div class="flex flex-col sm:flex-row gap-3">
                 <button @click="showUpload = true; paymentType = 'ujl'" 
                         class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
@@ -666,7 +615,6 @@
                  style="display: none;">
                 
                 <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-                    {{-- MODAL HEADER --}}
                     <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl">
                         <div class="flex items-center justify-between">
                             <div>
@@ -681,7 +629,6 @@
                         </div>
                     </div>
 
-                    {{-- MODAL BODY --}}
                     <form action="{{ route('payment-proof.store', $catalog) }}" 
                           method="POST" 
                           enctype="multipart/form-data"
@@ -690,7 +637,6 @@
 
                         <input type="hidden" name="payment_type" :value="paymentType">
 
-                        {{-- INFORMASI NILAI --}}
                         <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
                             <div class="grid md:grid-cols-2 gap-4 text-sm">
                                 <div>
@@ -704,7 +650,6 @@
                             </div>
                         </div>
 
-                        {{-- DATA PESERTA --}}
                         <div class="space-y-4">
                             <h4 class="font-bold text-gray-800 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -761,7 +706,6 @@
                             </div>
                         </div>
 
-                        {{-- BUKTI PEMBAYARAN --}}
                         <div class="space-y-4">
                             <h4 class="font-bold text-gray-800 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -825,7 +769,6 @@
                             </div>
                         </div>
 
-                        {{-- SUBMIT BUTTONS --}}
                         <div class="flex gap-3 pt-4">
                             <button type="button" 
                                     @click="showUpload = false"

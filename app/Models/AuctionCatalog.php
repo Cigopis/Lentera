@@ -33,13 +33,11 @@ class AuctionCatalog extends Model
         'official_auction_url',
         'status',
         'is_featured',
-        
-        // Spesifikasi Properti
-        'land_area',      // Luas Tanah
-        'building_area',  // Luas Bangunan
-        'bedrooms',       // Kamar Tidur
-        'bathrooms',      // Kamar Mandi
-        'floors',         // Jumlah Lantai
+        'land_area',
+        'building_area',
+        'bedrooms',
+        'bathrooms',
+        'floors',
     ];
 
     protected $casts = [
@@ -49,8 +47,6 @@ class AuctionCatalog extends Model
         'is_featured' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-        
-        // Cast untuk spesifikasi
         'land_area' => 'decimal:2',
         'building_area' => 'decimal:2',
         'bedrooms' => 'integer',
@@ -62,7 +58,6 @@ class AuctionCatalog extends Model
     {
         return $this->hasMany(CatalogView::class, 'catalog_id');
     }
-
 
     protected static function boot()
     {
@@ -96,7 +91,6 @@ class AuctionCatalog extends Model
                     ->where('auction_date', '>=', now()->toDateString());
     }
 
-
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -106,7 +100,6 @@ class AuctionCatalog extends Model
     {
         return $this->belongsTo(SubCategory::class);
     }
-
 
     public function city(): BelongsTo
     {
@@ -140,7 +133,6 @@ class AuctionCatalog extends Model
         return $this->hasMany(AssetFacility::class, 'catalog_id');
     }
     
-    // Relationship untuk Payment Proofs
     public function paymentProofs(): HasMany
     {
         return $this->hasMany(PaymentProof::class, 'catalog_id');
@@ -260,7 +252,7 @@ class AuctionCatalog extends Model
         } elseif ($daysLeft == 1) {
             return 'Akan berakhir besok';
         } else {
-            return "{$daysLeft} hari lagi";
+            return "{$daysLeft} hari tersisa";
         }
     }
 
@@ -293,19 +285,12 @@ class AuctionCatalog extends Model
             default => $this->status,
         };
     }
-    
-    // Accessor untuk format spesifikasi
-    /**
-     * Get formatted land area
-     */
+
     public function getFormattedLandAreaAttribute(): string
     {
         return $this->land_area ? number_format($this->land_area, 0, ',', '.') . ' m²' : '-';
     }
 
-    /**
-     * Get formatted building area
-     */
     public function getFormattedBuildingAreaAttribute(): string
     {
         return $this->building_area ? number_format($this->building_area, 0, ',', '.') . ' m²' : '-';
