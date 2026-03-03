@@ -7,7 +7,6 @@ use App\Http\Controllers\AuctionController;
 use App\Http\Controllers\CatalogPageController;
 use App\Http\Controllers\PaymentProofController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HelpController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
