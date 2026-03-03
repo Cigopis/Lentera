@@ -60,12 +60,12 @@
 
 
     {{-- GRID KATALOG --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 items-stretch">
 
         @forelse($catalogs as $catalog)
 
             <div class="h-full">
-                <x-catalog-card :catalog="$catalog" layout="horizontal" />
+                <x-catalog-card :catalog="$catalog" layout="vertical" />
             </div>
 
         @empty

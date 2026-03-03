@@ -196,9 +196,9 @@
     </script>
 
     {{-- 
-        Grid diratakan agar order bisa bekerja lintas kolom.
-        Mobile: Gallery(1) → Sidebar(2) → Deskripsi(3) → Spesifikasi(4) → Fasilitas(5)
-        Desktop: kiri col-span-2 (Gallery, Deskripsi, Spesifikasi, Fasilitas) | kanan (Sidebar sticky)
+        Grid Layout - URUTAN YANG BENAR:
+        Mobile: Gallery(1) → Sidebar(2) → Success(2.6) → Deskripsi(3) → Spesifikasi(4) → Fasilitas(5) → Upload(6)
+        Desktop: kiri col-span-2 (Gallery, Deskripsi, Spesifikasi, Fasilitas, Upload) | kanan (Sidebar sticky)
     --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
 
@@ -261,7 +261,7 @@
 
                 {{-- IMAGE COUNTER --}}
                 <div class="absolute bottom-3 right-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm"
-                     x-show="currentIndex > 0">
+                     x-show="images.length > 1">
                     <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
                 </div>
             </div>
@@ -335,7 +335,7 @@
 
         {{-- ================= RIGHT SIDEBAR ================= --}}
         {{-- Mobile: order 2 (setelah gallery) | Desktop: col kanan, membentang ke bawah --}}
-        <div class="order-2 lg:row-span-4">
+        <div class="order-2 lg:row-span-6">
             <div class="bg-white border border-slate-200 rounded-2xl p-6 sticky top-24 shadow-md">
 
                 {{-- STATUS BADGE --}}
@@ -350,13 +350,7 @@
                         <span class="px-3 py-1 text-xs rounded-full font-semibold
                             {{ $daysLeft == 0 ? 'bg-red-100 text-red-600' : 
                             ($daysLeft == 1 ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600') }}">
-                            @if($daysLeft == 0)
-                                HARI INI
-                            @elseif($daysLeft == 1)
-                                BESOK (H-1)
-                            @else
-                                {{ $daysLeft }} hari lagi
-                            @endif
+                            {{ $catalog->getDeadlineStatus() }}
                         </span>
                     @endif
                 </div>
@@ -402,7 +396,7 @@
                     <div>
                         <p class="text-slate-400">Mulai Awal Lelang</p>
                         <p class="font-medium">
-                            {{ $catalog->created_at->format('d F Y') }}
+                            {{ $catalog->auction_date->copy()->subDay()->format('d F Y') }}
                         </p>
                     </div>
 
@@ -410,7 +404,7 @@
                     <div>
                         <p class="text-slate-400">Batas Akhir Penawaran</p>
                         <p class="font-medium">
-                            {{ $catalog->auction_date->format('d F Y') }} 23.00 WIB
+                            {{ $catalog->auction_date->format('d F Y') }} 13.00 WIB
                         </p>
                     </div>
 
@@ -462,6 +456,26 @@
         </div>
         {{-- ================= END SIDEBAR ================= --}}
 
+        {{-- SUCCESS MESSAGE --}}
+        @if(session('success'))
+        <div class="lg:col-span-3 order-[2.6]">
+            <div class="bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start gap-3" x-data="{ show: true }" x-show="show" x-transition>
+                <svg class="w-6 h-6 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="flex-1">
+                    <p class="font-semibold text-green-800">Berhasil!</p>
+                    <p class="text-sm text-green-700">{{ session('success') }}</p>
+                </div>
+                <button @click="show = false" class="text-green-600 hover:text-green-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        @endif
+
         {{-- ================= DESKRIPSI ================= --}}
         {{-- Mobile: order 3 | Desktop: col-span-2 --}}
         <div class="lg:col-span-2 order-3 bg-white border border-slate-200 rounded-2xl p-6">
@@ -473,45 +487,55 @@
 
         {{-- ================= SPESIFIKASI ================= --}}
         {{-- Mobile: order 4 | Desktop: col-span-2 --}}
-        @if($catalog->specifications)
+        @if($catalog->land_area || $catalog->building_area || $catalog->bedrooms || $catalog->bathrooms || $catalog->floors)
         <div class="lg:col-span-2 order-4 bg-white border border-slate-200 rounded-2xl p-6">
             <h3 class="text-base font-bold text-slate-800 mb-4">Spesifikasi Aset</h3>
 
             <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                @if($catalog->land_area)
                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                    <p class="text-xs text-slate-400 mb-1">Luas Tanah</p>
+                    <p class="text-xs text-slate-400 mb-1">Luas Tanah (LT)</p>
                     <p class="font-bold text-blue-600">
-                        {{ $catalog->specifications->formatted_land_area }}
+                        {{ number_format($catalog->land_area, 0, ',', '.') }} m²
                     </p>
                 </div>
+                @endif
 
+                @if($catalog->building_area)
                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                    <p class="text-xs text-slate-400 mb-1">Luas Bangunan</p>
+                    <p class="text-xs text-slate-400 mb-1">Luas Bangunan (LB)</p>
                     <p class="font-bold text-blue-600">
-                        {{ $catalog->specifications->formatted_building_area }}
+                        {{ number_format($catalog->building_area, 0, ',', '.') }} m²
                     </p>
                 </div>
+                @endif
 
+                @if($catalog->bedrooms)
                 <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
                     <p class="text-xs text-slate-400 mb-1">Kamar Tidur</p>
                     <p class="font-bold text-slate-700">
-                        {{ $catalog->specifications->bedrooms }}
+                        {{ $catalog->bedrooms }}
                     </p>
                 </div>
+                @endif
 
+                @if($catalog->bathrooms)
                 <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
                     <p class="text-xs text-slate-400 mb-1">Kamar Mandi</p>
                     <p class="font-bold text-slate-700">
-                        {{ $catalog->specifications->bathrooms }}
+                        {{ $catalog->bathrooms }}
                     </p>
                 </div>
+                @endif
 
+                @if($catalog->floors)
                 <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
-                    <p class="text-xs text-slate-400 mb-1">Lantai</p>
+                    <p class="text-xs text-slate-400 mb-1">Jumlah Lantai</p>
                     <p class="font-bold text-slate-700">
-                        {{ $catalog->specifications->floors }}
+                        {{ $catalog->floors }}
                     </p>
                 </div>
+                @endif
             </div>
         </div>
         @endif
@@ -532,6 +556,300 @@
             </div>
         </div>
         @endif
+
+        {{-- ================= UPLOAD BUKTI PEMBAYARAN ================= --}}
+        {{-- Mobile: order 6 | Desktop: col-span-2 --}}
+        <div class="lg:col-span-2 order-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-6 md:p-8" 
+             x-data="{ 
+                 showUpload: false, 
+                 paymentType: 'ujl',
+                 showInfo: true 
+             }">
+            
+            {{-- INFO HEADER --}}
+            <div class="flex items-start gap-4 mb-6">
+                <div class="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-blue-900 mb-2">
+                        Informasi Penting untuk Peserta Lelang
+                    </h3>
+                    <p class="text-sm text-blue-700 leading-relaxed">
+                        Sebelum mengikuti lelang, Anda <strong>wajib</strong> mengunggah bukti pembayaran Uang Jaminan Lelang (UJL). 
+                        Setelah memenangkan lelang, Anda juga <strong>wajib</strong> mengunggah bukti pelunasan.
+                    </p>
+                </div>
+            </div>
+
+            {{-- PANDUAN SINGKAT --}}
+            <div x-show="showInfo" 
+                 x-transition
+                 class="bg-white rounded-xl p-5 mb-6 border border-blue-100">
+                <div class="flex items-start justify-between mb-4">
+                    <h4 class="font-bold text-gray-800 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Panduan Upload Bukti Pembayaran
+                    </h4>
+                    <button @click="showInfo = false" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+                    <div class="space-y-3">
+                        <div class="flex gap-3">
+                            <div class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">1</div>
+                            <div>
+                                <p class="font-semibold text-gray-800">Upload Bukti UJL</p>
+                                <p class="text-xs">Unggah bukti transfer Uang Jaminan Lelang sebelum batas waktu yang ditentukan</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">2</div>
+                            <div>
+                                <p class="font-semibold text-gray-800">Tunggu Verifikasi</p>
+                                <p class="text-xs">Tim kami akan memverifikasi bukti pembayaran Anda (maks. 1x24 jam)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex gap-3">
+                            <div class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">3</div>
+                            <div>
+                                <p class="font-semibold text-gray-800">Ikuti Lelang</p>
+                                <p class="text-xs">Setelah terverifikasi, Anda dapat mengikuti lelang pada tanggal yang ditentukan</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs font-bold">4</div>
+                            <div>
+                                <p class="font-semibold text-gray-800">Upload Bukti Pelunasan</p>
+                                <p class="text-xs">Jika menang, unggah bukti pelunasan sesuai jangka waktu yang ditentukan</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <p class="text-xs text-gray-500 flex items-start gap-2">
+                        <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <span><strong>Penting:</strong> Pastikan bukti transfer jelas dan terbaca. Format yang diterima: JPG, PNG, PDF (maks. 5MB)</span>
+                    </p>
+                </div>
+            </div>
+
+            {{-- UPLOAD BUTTON --}}
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button @click="showUpload = true; paymentType = 'ujl'" 
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    Upload Bukti UJL
+                </button>
+                
+                <button @click="showUpload = true; paymentType = 'pelunasan'" 
+                        class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Upload Bukti Pelunasan
+                </button>
+            </div>
+
+            {{-- UPLOAD MODAL --}}
+            <div x-show="showUpload"
+                 x-transition.opacity
+                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                 @click.self="showUpload = false"
+                 style="display: none;">
+                
+                <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                    {{-- MODAL HEADER --}}
+                    <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-xl font-bold mb-1" x-text="paymentType === 'ujl' ? 'Upload Bukti Uang Jaminan Lelang' : 'Upload Bukti Pelunasan'"></h3>
+                                <p class="text-sm text-blue-100">{{ $catalog->title }}</p>
+                            </div>
+                            <button @click="showUpload = false" class="text-white hover:bg-white/20 rounded-full p-2 transition">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- MODAL BODY --}}
+                    <form action="{{ route('payment-proof.store', $catalog) }}" 
+                          method="POST" 
+                          enctype="multipart/form-data"
+                          class="p-6 space-y-5">
+                        @csrf
+
+                        <input type="hidden" name="payment_type" :value="paymentType">
+
+                        {{-- INFORMASI NILAI --}}
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                            <div class="grid md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p class="text-gray-500 mb-1">Nilai UJL yang Harus Dibayar</p>
+                                    <p class="text-lg font-bold text-blue-600">{{ $catalog->formatted_deposit_amount }}</p>
+                                </div>
+                                <div x-show="paymentType === 'pelunasan'">
+                                    <p class="text-gray-500 mb-1">Nilai Pelunasan</p>
+                                    <p class="text-lg font-bold text-green-600">{{ $catalog->formatted_reserve_price }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- DATA PESERTA --}}
+                        <div class="space-y-4">
+                            <h4 class="font-bold text-gray-800 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                Data Peserta Lelang
+                            </h4>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Nama Lengkap <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" 
+                                       name="user_name" 
+                                       required
+                                       value="{{ old('user_name') }}"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                       placeholder="Masukkan nama lengkap sesuai KTP">
+                                @error('user_name')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Email <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="email" 
+                                           name="user_email" 
+                                           required
+                                           value="{{ old('user_email') }}"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                           placeholder="email@example.com">
+                                    @error('user_email')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        No. Telepon <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="tel" 
+                                           name="user_phone" 
+                                           required
+                                           value="{{ old('user_phone') }}"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                           placeholder="08xxxxxxxxxx">
+                                    @error('user_phone')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- BUKTI PEMBAYARAN --}}
+                        <div class="space-y-4">
+                            <h4 class="font-bold text-gray-800 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Bukti Pembayaran
+                            </h4>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Nominal Pembayaran <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">Rp</span>
+                                    <input type="number" 
+                                           name="amount" 
+                                           required
+                                           min="0"
+                                           value="{{ old('amount') }}"
+                                           class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                           placeholder="0">
+                                </div>
+                                @error('amount')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Upload Bukti Transfer <span class="text-red-500">*</span>
+                                </label>
+                                <div class="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-blue-400 transition cursor-pointer"
+                                     onclick="document.getElementById('proof_image').click()">
+                                    <div class="space-y-2 text-center">
+                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <div class="text-sm text-gray-600">
+                                            <label class="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500">
+                                                <span>Klik untuk upload</span>
+                                                <input id="proof_image" name="proof_image" type="file" class="sr-only" accept="image/*,.pdf" required>
+                                            </label>
+                                            <p class="pl-1">atau drag and drop</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500">PNG, JPG, PDF hingga 5MB</p>
+                                    </div>
+                                </div>
+                                @error('proof_image')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Catatan (Opsional)
+                                </label>
+                                <textarea name="notes" 
+                                          rows="3"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                          placeholder="Tambahkan catatan jika diperlukan...">{{ old('notes') }}</textarea>
+                            </div>
+                        </div>
+
+                        {{-- SUBMIT BUTTONS --}}
+                        <div class="flex gap-3 pt-4">
+                            <button type="button" 
+                                    @click="showUpload = false"
+                                    class="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                    class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition shadow-lg hover:shadow-xl">
+                                Upload Bukti Pembayaran
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {{-- ================= END UPLOAD SECTION ================= --}}
 
     </div>
 </div>

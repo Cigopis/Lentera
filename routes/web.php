@@ -4,8 +4,9 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AuctionController;
 use App\Http\Controllers\CatalogPageController;
-use App\Http\Controllers\HelpController;
+use App\Http\Controllers\PaymentProofController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HelpController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -23,3 +24,10 @@ Route::get('/katalog', [CatalogPageController::class, 'index'])
     ->name('katalog.index');
 
 Route::get('/employees', [EmployeeController::class, 'index']);
+
+// Routes untuk payment proof
+Route::post('/catalog/{catalog}/payment-proof', [PaymentProofController::class, 'store'])
+    ->name('payment-proof.store');
+
+Route::post('/catalog/{catalog}/payment-proof/check', [PaymentProofController::class, 'checkStatus'])
+    ->name('payment-proof.check');
