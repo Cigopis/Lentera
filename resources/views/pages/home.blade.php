@@ -3,7 +3,10 @@
 @section('content')
 
 <style>
-html, body { background-color: #f0f9ff !important; }
+html, body { background-color: #f0f9ff !important;
+             overflow-x: clip; 
+
+}
 
 /* GLOBAL BACKGROUND */
 body::before {
@@ -602,11 +605,12 @@ document.addEventListener("DOMContentLoaded", function() {
          x-transition:enter-start="opacity-0 translate-y-10 blur-xl"
          x-transition:enter-end="opacity-100 translate-y-0 blur-0">
         <h1 class="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-            E-Katalog Lentera Kertajaya
+            {{ $heroTitle }}
         </h1>
         <p class="mt-6 text-lg max-w-xl mx-auto">
-            Pusat informasi aset lelang terpadu yang membantu Anda melihat peluang dengan lebih jelas dan terarah.
+            {{ $heroDescription }}
         </p>
+
         <div class="mt-10">
             <a href="{{ route('katalog.index') }}"
                class="magnetic inline-block px-10 py-4 rounded-full
@@ -620,76 +624,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 </section>
 
-
-{{-- ===================== STACK SCROLL ==================== --}}
-<section class="stackscroll-outer mb-20" id="cara-daftar">
-    <div class="stackscroll-sticky">
-
-        <div class="stackscroll-bg"></div>
-        <div class="stackscroll-rays"></div>
-        <div class="stackscroll-dust"></div>
-        <div class="stackscroll-shoot"></div>
-
-        <div class="stackscroll-glow s1 active" id="ss-glow"></div>
-
-        <div class="stackscroll-section-header pt-14">
-            <p class="stackscroll-section-eyebrow">Cara Kerja</p>
-            <h2 class="stackscroll-section-title">Panduan Alur Lentera</h2>
-        </div>
-
-        {{-- PROGRESS BAR --}}
-        <div class="stackscroll-progress">
-            <div class="stackscroll-progress-fill" id="ss-fill"></div>
-
-            <div class="stackscroll-dots">
-                @foreach($guideSteps as $index => $step)
-                    <div class="stackscroll-dot {{ $loop->first ? 'active' : '' }}"
-                         data-dot="{{ $index }}">
-                    </div>
-                @endforeach
-            </div>
-        </div>
-
-        {{-- CONTENT --}}
-        <div class="stackscroll-content" style="position:relative; height:340px;">
-
-            @foreach($guideSteps as $index => $step)
-                <div class="stackscroll-step {{ $loop->first ? 'active' : '' }}"
-                     data-step="{{ $index }}">
-
-                    <div class="stackscroll-badge">
-                        Langkah {{ $step->step_number }}
-                    </div>
-
-                    <div class="stackscroll-num"
-                         data-num="{{ str_pad($step->step_number, 2, '0', STR_PAD_LEFT) }}">
-                        {{ str_pad($step->step_number, 2, '0', STR_PAD_LEFT) }}
-                    </div>
-
-                    <div class="stackscroll-divider"></div>
-
-                    <h3 class="stackscroll-title">
-                        {{ $step->title }}
-                    </h3>
-
-                    <p class="stackscroll-desc">
-                        {!! $step->description !!}
-                    </p>
-
-                </div>
-            @endforeach
-
-        </div>
-
-        <div class="stackscroll-hint" id="ss-hint">
-            <span>Scroll</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
-                <polyline points="6 9 12 15 18 9"/>
-            </svg>
-        </div>
-
-    </div>
-</section>
 
 
 {{-- ===================== KATALOG ==================== --}}
@@ -727,18 +661,11 @@ document.addEventListener("DOMContentLoaded", function() {
     </div>
 
 
-    {{-- ================= BANNER PROMO FULL WIDTH ================= --}}
-    {{--
-        FIX BUG 2: Bungkus banner promo dengan .promo-slider-wrap
-        agar JS slider di atas bisa mengontrol transisi dengan benar.
-        Pastikan x-banner-slider component menambahkan class .promo-slide
-        ke setiap slide item-nya, atau gunakan wrapper di bawah ini.
-    --}}
-    <div class="relative w-screen left-1/2 -translate-x-1/2 mb-20">
-        <div class="promo-slider-wrap">
-            <x-banner-slider :banners="$promoBanners" variant="promo" />
-        </div>
+    @if($promoBanners->isNotEmpty())
+    <div class="relative w-screen left-1/2 -translate-x-1/2 mb-16">
+        <x-banner-slider :banners="$promoBanners" variant="promo" />
     </div>
+    @endif
 
 
     {{-- ================= HEADER KATALOG ================= --}}
@@ -764,11 +691,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
     {{-- ================= GRID KATALOG ================= --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
 
         @forelse($catalogs as $catalog)
             <div class="reveal">
-                <x-catalog-card :catalog="$catalog" />
+                <x-catalog-card :catalog="$catalog" layout="vertical" />
             </div>
         @empty
             <div class="col-span-full text-center py-24 text-slate-400">

@@ -3,7 +3,7 @@
     'layout' => 'horizontal'
 ])
 
-<a href="{{ route('auction.show', $catalog->slug) }}" 
+<a href="{{ route('lelang.show', $catalog->slug) }}" 
    class="group block relative overflow-hidden 
           bg-white
           border border-slate-200
@@ -18,16 +18,48 @@
         {{-- ================= VERTICAL (MARKETPLACE STYLE) ================= --}}
         
         {{-- IMAGE --}}
-        <div class="relative aspect-[4/3] overflow-hidden">
-            <img 
-                src="{{ $catalog->primaryImage?->image_path 
-                    ? asset('storage/'.$catalog->primaryImage->image_path) 
-                    : asset('img/default.jpg') }}"
-                class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
-            >
+        <div class="relative overflow-hidden rounded-t-2xl md:rounded-t-3xl">
+            <div class="grid gap-0.5 bg-slate-100" style="grid-template-columns: 2fr 1fr; height: 200px;">
 
-            <div class="absolute top-3 right-3">
-                <span class="px-2 py-1 text-[11px] font-semibold rounded-full
+                {{-- FOTO UTAMA (KIRI) --}}
+                <div class="relative overflow-hidden">
+                    <img 
+                        src="{{ $catalog->primaryImage?->image_path 
+                            ? asset('storage/'.$catalog->primaryImage->image_path) 
+                            : asset('img/default.jpg') }}"
+                        class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                    >
+                </div>
+
+                {{-- 3 FOTO KECIL (KANAN) --}}
+                <div class="grid grid-rows-3 gap-0.5">
+                    @for($i = 1; $i <= 3; $i++)
+                        @php $image = $catalog->catalogImages->get($i); @endphp
+                        <div class="relative overflow-hidden">
+                            @if($image)
+                                <img 
+                                    src="{{ asset('storage/'.$image->image_path) }}"
+                                    class="w-full h-full object-cover"
+                                >
+                                @if($i == 3 && $catalog->catalogImages->count() > 4)
+                                    <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                        <span class="text-white text-[10px] md:text-xs font-bold">
+                                            +{{ $catalog->catalogImages->count() - 4 }} foto
+                                        </span>
+                                    </div>
+                                @endif
+                            @else
+                                <div class="w-full h-full bg-slate-200"></div>
+                            @endif
+                        </div>
+                    @endfor
+                </div>
+
+            </div>
+
+            {{-- STATUS BADGE --}}
+            <div class="absolute top-2 right-2">
+                <span class="px-1.5 py-0.5 md:px-2 md:py-1 text-[9px] md:text-[11px] font-semibold rounded-full
                     {{ $catalog->status == 'active' 
                         ? 'bg-emerald-100 text-emerald-600' 
                         : 'bg-slate-100 text-slate-500' }}">
@@ -37,48 +69,66 @@
         </div>
 
         {{-- CONTENT --}}
-        <div class="p-4 flex flex-col flex-1">
+        <div class="p-2 md:p-4 flex flex-col flex-1">
 
             {{-- CATEGORY --}}
-            <span class="text-[11px] font-semibold text-blue-600 uppercase tracking-wide mb-1">
+            <span class="text-[9px] md:text-[11px] font-semibold text-blue-600 uppercase tracking-wide mb-0.5 md:mb-1">
                 {{ $catalog->category->name ?? 'Lentera' }}
             </span>
 
             {{-- TITLE --}}
-            <h3 class="text-sm md:text-base font-semibold text-slate-800 
-                       line-clamp-2 leading-snug mb-2 
+            <h3 class="text-[11px] md:text-base font-semibold text-slate-800 
+                       line-clamp-2 leading-snug mb-1 md:mb-2
                        group-hover:text-blue-600 transition">
                 {{ $catalog->title }}
             </h3>
 
             {{-- LOCATION --}}
-            <p class="text-xs text-slate-400 mb-3">
+            <p class="text-[9px] md:text-xs text-slate-400 mb-2 md:mb-3">
                 {{ $catalog->city->name }}
             </p>
 
             {{-- PRICE --}}
-            <div class="space-y-2 mb-4">
+            <div class="space-y-1 md:space-y-2 mb-2 md:mb-3">
 
-                <div class="bg-blue-50 rounded-xl px-3 py-2">
-                    <p class="text-[11px] text-slate-400">Limit</p>
-                    <p class="text-blue-600 font-semibold text-sm">
+                <div class="bg-blue-50 rounded-lg md:rounded-xl px-2 py-1 md:px-3 md:py-2">
+                    <p class="text-[8px] md:text-[11px] text-slate-400">Limit</p>
+                    <p class="text-blue-600 font-semibold text-[9px] md:text-sm leading-tight">
                         {{ $catalog->formatted_reserve_price }}
                     </p>
                 </div>
 
-                <div class="bg-violet-50 rounded-xl px-3 py-2">
-                    <p class="text-[11px] text-slate-400">Jaminan</p>
-                    <p class="text-violet-600 font-semibold text-sm">
+                <div class="bg-violet-50 rounded-lg md:rounded-xl px-2 py-1 md:px-3 md:py-2">
+                    <p class="text-[8px] md:text-[11px] text-slate-400">Jaminan</p>
+                    <p class="text-violet-600 font-semibold text-[9px] md:text-sm leading-tight">
                         {{ $catalog->formatted_deposit_amount }}
                     </p>
                 </div>
 
             </div>
 
+            {{-- TANGGAL LELANG --}}
+            <div class="space-y-1 mb-2 md:mb-3">
+                <div class="flex justify-between items-center">
+                    <p class="text-[8px] md:text-[11px] text-slate-400">Batas Setor Jaminan</p>
+                    <p class="text-[8px] md:text-[11px] font-medium text-slate-600">
+                        {{ $catalog->auction_date->subDay()->format('d M Y') }}
+                    </p>
+                </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-[8px] md:text-[11px] text-slate-400">Batas Penawaran</p>
+                    <p class="text-[8px] md:text-[11px] font-medium text-slate-600">
+                        {{ $catalog->auction_date->format('d M Y') }}
+                    </p>
+                </div>
+            </div>
+
             {{-- FOOTER --}}
-            <div class="mt-auto flex justify-between items-center text-xs text-slate-400">
-                <span>{{ $catalog->auction_date->format('d M Y') }}</span>
-                <span class="text-blue-600 font-medium group-hover:underline">
+            <div class="mt-auto flex justify-between items-center pt-1 md:pt-2 border-t border-slate-100">
+                <span class="text-[8px] md:text-xs text-slate-400">
+                    {{ $catalog->auction_date->format('d M Y') }}
+                </span>
+                <span class="text-[9px] md:text-xs text-blue-600 font-medium group-hover:underline">
                     Detail →
                 </span>
             </div>

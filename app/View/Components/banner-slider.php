@@ -9,7 +9,7 @@ use Illuminate\View\Component;
 class banner-slider extends Component
 {
     /**
-     * Create a new component instance.
+     * Create a new component    instance.
      */
     public function __construct()
     {

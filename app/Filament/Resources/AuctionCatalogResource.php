@@ -58,7 +58,7 @@ class AuctionCatalogResource extends Resource
                                             ->helperText('Kode unik untuk identifikasi katalog'),
 
                                         Forms\Components\TextInput::make('shop_number')
-                                            ->label('Nomor SHM')
+                                            ->label('Nomor Surat')
                                             ->maxLength(50)
                                             ->placeholder('Contoh: SHM No. 1234/Surabaya')
                                             ->helperText('Nomor Sertifikat Hak Milik (opsional)'),
@@ -116,19 +116,18 @@ class AuctionCatalogResource extends Resource
                                             ->disabled(fn (Get $get) => !$get('category_id')),
 
                                         Forms\Components\Select::make('city_id')
-                                        ->label('City')
-                                        ->options(
-                                            City::where('is_active', true)
-                                                ->orderBy('province')
-                                                ->orderBy('name')
-                                                ->get()
-                                                ->mapWithKeys(fn ($city) => [
-                                                    $city->id => "{$city->name} - {$city->province}"
-                                                ])
-                                        )
-                                        ->searchable()
-                                        ->required(),
-
+                                            ->label('City')
+                                            ->options(
+                                                City::where('is_active', true)
+                                                    ->orderBy('province')
+                                                    ->orderBy('name')
+                                                    ->get()
+                                                    ->mapWithKeys(fn ($city) => [
+                                                        $city->id => "{$city->name} - {$city->province}"
+                                                    ])
+                                            )
+                                            ->searchable()
+                                            ->required(),
 
                                         Forms\Components\Textarea::make('address')
                                             ->label('Alamat Lengkap')
@@ -277,34 +276,32 @@ class AuctionCatalogResource extends Resource
                                                     ->resize(1920, null, function ($constraint) {
                                                         $constraint->aspectRatio();
                                                         $constraint->upsize();
-                                                    })                                                  
+                                                    })
                                                     ->toWebp(80);
 
                                                 $path = 'catalog_images/' . Str::uuid() . '.webp';
 
-                                                // Simpan ke storage/public/catalog_images
                                                 Storage::disk('public')->put($path, (string) $image);
 
-                                                if ($record) {
-                                                    // cek apakah sudah ada primary
-                                                        $hasPrimary = \App\Models\CatalogImage::where('catalog_id', $record->id)
-                                                                                            ->where('is_primary', true)
-                                                                                            ->exists();
+                                                // Hanya buat CatalogImage saat EDIT (record sudah ada)
+                                                // Saat CREATE ditangani oleh afterCreate() di CreateAuctionCatalog
+                                                if ($record && $record->exists) {
+                                                    $hasPrimary = \App\Models\CatalogImage::where('catalog_id', $record->id)
+                                                        ->where('is_primary', true)
+                                                        ->exists();
 
-                                                        \App\Models\CatalogImage::create([
-                                                            'catalog_id' => $record->id,
-                                                            'image_path' => $path,
-                                                            'is_primary' => !$hasPrimary,
+                                                    \App\Models\CatalogImage::create([
+                                                        'catalog_id' => $record->id,
+                                                        'image_path' => $path,
+                                                        'is_primary'  => !$hasPrimary,
                                                     ]);
                                                 }
 
                                                 return $path;
                                             })
-
                                             ->columnSpanFull(),
                                     ]),
                             ]),
-
 
                         // TAB 5: STATUS & PENGATURAN
                         Forms\Components\Tabs\Tab::make('Status & Pengaturan')
@@ -351,11 +348,11 @@ class AuctionCatalogResource extends Resource
                                                 if (!$record || !$record->auction_date) {
                                                     return '-';
                                                 }
-                                                
+
                                                 $auctionDate = Carbon::parse($record->auction_date);
                                                 $now = Carbon::now();
                                                 $daysLeft = $now->diffInDays($auctionDate, false);
-                                                
+
                                                 if ($daysLeft < 0) {
                                                     return '⚫ Lelang sudah selesai';
                                                 } elseif ($daysLeft == 0) {
@@ -430,11 +427,11 @@ class AuctionCatalogResource extends Resource
                     ->sortable()
                     ->description(function ($record) {
                         if (!$record->auction_date) return null;
-                        
+
                         $auctionDate = Carbon::parse($record->auction_date);
                         $now = Carbon::now();
                         $daysLeft = $now->diffInDays($auctionDate, false);
-                        
+
                         if ($daysLeft < 0) {
                             return '⚫ Selesai';
                         } elseif ($daysLeft == 0) {
@@ -505,7 +502,7 @@ class AuctionCatalogResource extends Resource
 
                 Tables\Filters\Filter::make('deadline_soon')
                     ->label('H-1 Lelang (Akan Hilang)')
-                    ->query(fn (Builder $query): Builder => 
+                    ->query(fn (Builder $query): Builder =>
                         $query->whereDate('auction_date', '=', Carbon::tomorrow())
                               ->orWhereDate('auction_date', '=', Carbon::today())
                     )
@@ -513,7 +510,7 @@ class AuctionCatalogResource extends Resource
 
                 Tables\Filters\Filter::make('upcoming_week')
                     ->label('Lelang Minggu Ini')
-                    ->query(fn (Builder $query): Builder => 
+                    ->query(fn (Builder $query): Builder =>
                         $query->whereBetween('auction_date', [
                             Carbon::today(),
                             Carbon::today()->addWeek()
@@ -524,7 +521,7 @@ class AuctionCatalogResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-                
+
                 Tables\Actions\Action::make('change_status')
                     ->label('Ubah Status')
                     ->icon('heroicon-o-arrow-path')
@@ -542,7 +539,7 @@ class AuctionCatalogResource extends Resource
                     ])
                     ->action(function (AuctionCatalog $record, array $data): void {
                         $record->update(['status' => $data['status']]);
-                        
+
                         Notification::make()
                             ->title('Status berhasil diubah')
                             ->success()
@@ -552,14 +549,14 @@ class AuctionCatalogResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    
+
                     Tables\Actions\BulkAction::make('activate')
                         ->label('Aktifkan')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()
                         ->action(fn (Collection $records) => $records->each->update(['status' => 'active'])),
-                    
+
                     Tables\Actions\BulkAction::make('close')
                         ->label('Tandai Terjual/Tutup')
                         ->icon('heroicon-o-x-circle')
@@ -594,12 +591,11 @@ class AuctionCatalogResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        // Badge untuk menampilkan jumlah katalog H-1
         $count = static::getModel()::query()
             ->whereDate('auction_date', '=', Carbon::tomorrow())
             ->orWhereDate('auction_date', '=', Carbon::today())
             ->count();
-            
+
         return $count > 0 ? (string) $count : null;
     }
 

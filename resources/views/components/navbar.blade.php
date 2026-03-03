@@ -242,11 +242,11 @@
                                     <div class="min-w-full flex flex-wrap gap-2 justify-center">
                                         @foreach ($chunk as $kota)
                                             <label class="filter-chip px-3 py-1 text-xs cursor-pointer transition-all hover:border-[#00529C] has-[:checked]:border-[#00529C] has-[:checked]:bg-blue-50">
-                                                <input type="checkbox"
-                                                       name="kota[]"
-                                                       value="{{ $kota->slug }}"
-                                                       class="sr-only peer"
-                                                       {{ in_array($kota->slug, request('kota', [])) ? 'checked' : '' }}>
+                                                <input type="radio"
+                                                    name="kota"
+                                                    value="{{ $kota->slug }}"
+                                                    class="sr-only peer"
+                                                    {{ request('kota') == $kota->slug ? 'checked' : '' }}>
                                                 <span class="peer-checked:text-[#00529C] font-medium peer-checked:font-semibold">
                                                     {{ $kota->name }}
                                                 </span>
@@ -294,10 +294,10 @@
                             class="w-full py-2 text-xs rounded-lg bg-[#00529C] text-white font-semibold hover:bg-[#003d73] transition">
                         Terapkan
                     </button>
-                    <button type="reset"
-                            class="w-full py-2 text-xs rounded-lg border border-[#00529C] text-[#00529C] font-medium hover:bg-blue-50 transition">
+                    <a href="{{ route('lelang.index') }}"
+                    class="block w-full py-2 text-xs rounded-lg border border-[#00529C] text-[#00529C] font-medium hover:bg-blue-50 transition text-center">
                         Reset
-                    </button>
+                    </a>
                 </div>
 
             </form>

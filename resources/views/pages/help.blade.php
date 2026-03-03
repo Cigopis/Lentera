@@ -237,6 +237,320 @@ body::before {
     color: #374151 !important;
     text-decoration: none !important;
 }
+
+/* ============================================
+   STACK SCROLL — MORNING LIGHT
+   ============================================ */
+.stackscroll-outer {
+    position: relative;
+    height: 400vh;
+    background: #fff;
+}
+.stackscroll-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.stackscroll-bg {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 30% 20%, #bfdbfe 0%, transparent 55%),
+        radial-gradient(ellipse at 70% 80%, #ddd6fe 0%, transparent 55%),
+        linear-gradient(to bottom, #f0f9ff 0%, #ffffff 100%);
+    z-index: 0;
+}
+.stackscroll-rays {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    opacity: 0.12;
+    background: repeating-conic-gradient(
+        from 0deg at 50% -20%,
+        #93c5fd 0deg 6deg,
+        transparent 6deg 18deg
+    );
+    animation: raysRotate 60s linear infinite;
+}
+@keyframes raysRotate {
+    from { transform: rotate(0deg);   }
+    to   { transform: rotate(360deg); }
+}
+.stackscroll-dust {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background-image:
+        radial-gradient(circle, rgba(59,130,246,0.35) 1px, transparent 1px),
+        radial-gradient(circle, rgba(139,92,246,0.2)  1px, transparent 1px);
+    background-size: 60px 60px, 100px 100px;
+    background-position: 0 0, 30px 30px;
+    opacity: 0.4;
+    animation: dustFloat 40s linear infinite;
+}
+@keyframes dustFloat {
+    from { transform: translateY(0);      }
+    to   { transform: translateY(-200px); }
+}
+.stackscroll-shoot {
+    position: absolute;
+    top: 20%;
+    left: -200px;
+    width: 300px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(59,130,246,0.6), transparent);
+    opacity: 0;
+    z-index: 3;
+    animation: shoot 12s ease-in-out infinite;
+}
+@keyframes shoot {
+    0%   { transform: translate(0,0) rotate(15deg);         opacity: 0; }
+    5%   {                                                   opacity: 1; }
+    40%  { transform: translate(130vw, 80px) rotate(15deg); opacity: 0; }
+    100% {                                                   opacity: 0; }
+}
+
+/* Progress bar */
+.stackscroll-progress {
+    position: absolute;
+    left: clamp(16px, 3vw, 48px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 200px;
+    background: rgba(59,130,246,0.12);
+    border-radius: 99px;
+    z-index: 30;
+}
+.stackscroll-progress-fill {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 0%;
+    background: linear-gradient(to bottom, #3b82f6, #6366f1);
+    border-radius: 99px;
+    transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 12px rgba(59,130,246,0.4);
+}
+.stackscroll-dots {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+    top: 0;
+    height: 100%;
+    pointer-events: none;
+}
+.stackscroll-dot {
+    width: 9px; height: 9px;
+    background: rgba(59,130,246,0.2);
+    border-radius: 50%;
+    margin-left: -3px;
+    transition: all 0.5s ease;
+    border: 1.5px solid transparent;
+    flex-shrink: 0;
+}
+.stackscroll-dot.active {
+    background: #3b82f6;
+    border-color: #93c5fd;
+    box-shadow: 0 0 12px rgba(59,130,246,0.5);
+}
+
+/* Section header */
+.stackscroll-section-header {
+    position: absolute;
+    top: clamp(32px, 5vh, 60px);
+    left: clamp(48px, 6vw, 100px);
+    z-index: 25;
+    text-align: left;
+}
+.stackscroll-section-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #3b82f6;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+.stackscroll-section-title {
+    font-size: clamp(22px, 3.5vw, 40px);
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+/* Content */
+.stackscroll-content {
+    position: relative;
+    z-index: 20;
+    width: 100%;
+    max-width: 680px;
+    padding: 0 24px;
+}
+.stackscroll-step {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 24px;
+    opacity: 0;
+    transform: translateY(60px) scale(0.96);
+    filter: blur(8px);
+    transition:
+        opacity   0.9s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+        filter    0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+.stackscroll-step.active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+    pointer-events: auto;
+}
+.stackscroll-step.exit-up {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.96);
+    filter: blur(8px);
+}
+
+/* Number */
+.stackscroll-num {
+    font-size: clamp(80px, 15vw, 140px);
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, #2563eb, #7c3aed, #0ea5e9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.04em;
+    position: relative;
+    filter: drop-shadow(0 4px 24px rgba(59,130,246,0.18));
+}
+.stackscroll-num::after {
+    content: attr(data-num);
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #3b82f6, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: blur(24px);
+    z-index: -1;
+    opacity: 0.5;
+}
+
+/* Divider */
+.stackscroll-divider {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, #3b82f6, transparent);
+    margin: 12px auto 28px;
+    position: relative;
+}
+.stackscroll-divider::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px; height: 6px;
+    background: #3b82f6;
+    border-radius: 50%;
+    box-shadow: 0 0 14px rgba(59,130,246,0.5);
+}
+
+/* Title & desc */
+.stackscroll-title {
+    font-size: clamp(22px, 4vw, 36px);
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 16px;
+}
+.stackscroll-desc {
+    font-size: clamp(14px, 2vw, 17px);
+    color: #64748b;
+    line-height: 1.75;
+    max-width: 480px;
+}
+
+/* Badge */
+.stackscroll-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 99px;
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.2);
+    color: #2563eb;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+/* Glow */
+.stackscroll-glow {
+    position: absolute;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(140px);
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+}
+.stackscroll-glow.s1 { background: #bfdbfe; }
+.stackscroll-glow.s2 { background: #ddd6fe; }
+.stackscroll-glow.s3 { background: #bae6fd; }
+.stackscroll-glow.active { opacity: 0.8; }
+
+/* Scroll hint */
+.stackscroll-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.4;
+    animation: hintBob 2s ease-in-out infinite;
+    transition: opacity 0.5s;
+    z-index: 30;
+}
+.stackscroll-hint.hidden { opacity: 0; pointer-events: none; }
+@keyframes hintBob {
+    0%, 100% { transform: translateX(-50%) translateY(0);  }
+    50%       { transform: translateX(-50%) translateY(6px); }
+}
+.stackscroll-hint span {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.stackscroll-hint svg {
+    width: 20px; height: 20px;
+    stroke: #64748b;
+}
 </style>
 
 {{-- ===================== HERO ==================== --}}
@@ -268,7 +582,7 @@ body::before {
 
 {{-- ===================== QUICK ACTIONS ==================== --}}
 <div class="quick-actions-wrapper">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-36">
         <div class="quick-action-card bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow p-6 text-center group cursor-pointer" data-modal="modal1">
             <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-600 transition-colors">
                 <svg class="w-8 h-8 text-blue-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -295,8 +609,8 @@ body::before {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
                 </svg>
             </div>
-            <h3 class="font-semibold text-gray-800 mb-2">Ke Website Lelang</h3>
-            <p class="text-sm text-gray-600">Akses situs resmi lelang</p>
+            <h3 class="font-semibold text-gray-800 mb-2">Alur Lentera</h3>
+            <p class="text-sm text-gray-600">Alur kerja website lentera</p>
         </div>
 
         <div class="quick-action-card bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow p-6 text-center group cursor-pointer" data-modal="modal4">
@@ -311,8 +625,69 @@ body::before {
     </div>
 </div>
 
+{{-- ===================== STACK SCROLL ==================== --}}
+        <section class="stackscroll-outer mb-20" id="cara-daftar">
+            <div class="stackscroll-sticky">
+
+                <div class="stackscroll-bg"></div>
+                <div class="stackscroll-rays"></div>
+                <div class="stackscroll-dust"></div>
+                <div class="stackscroll-shoot"></div>
+
+                <div class="stackscroll-glow s1 active" id="ss-glow"></div>
+
+                <div class="stackscroll-section-header pt-14">
+                    <p class="stackscroll-section-eyebrow">Cara Kerja</p>
+                    <h2 class="stackscroll-section-title">Panduan Alur Lentera</h2>
+                </div>
+
+                {{-- PROGRESS BAR --}}
+                <div class="stackscroll-progress">
+                    <div class="stackscroll-progress-fill" id="ss-fill"></div>
+                    <div class="stackscroll-dots">
+                        @foreach($guideSteps as $index => $step)
+                            <div class="stackscroll-dot {{ $loop->first ? 'active' : '' }}"
+                                data-dot="{{ $index }}">
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- CONTENT --}}
+                <div class="stackscroll-content" style="position:relative; height:340px;">
+                    @foreach($guideSteps as $index => $step)
+                        <div class="stackscroll-step {{ $loop->first ? 'active' : '' }}"
+                            data-step="{{ $index }}">
+
+                            <div class="stackscroll-badge">
+                                Langkah {{ $step->step_number }}
+                            </div>
+                            <div class="stackscroll-num"
+                                data-num="{{ str_pad($step->step_number, 2, '0', STR_PAD_LEFT) }}">
+                                {{ str_pad($step->step_number, 2, '0', STR_PAD_LEFT) }}
+                            </div>
+                            <div class="stackscroll-divider"></div>
+                            <h3 class="stackscroll-title">{{ $step->title }}</h3>
+                            <p class="stackscroll-desc">{!! $step->description !!}</p>
+
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="stackscroll-hint" id="ss-hint">
+                    <span>Scroll</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </div>
+
+            </div>
+        </section>
+
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+
+        <div class="max-w-5xl mx-auto px-6 pb-28">
         <!-- FAQ Section -->
         <div class="mb-16">
             <div class="text-center mb-12">
@@ -649,34 +1024,32 @@ body::before {
         </div>
     </div>
 
-    <!-- Modal 3: Ke Website Lelang -->
+    <!-- Modal 3: Alur Lentera — sekarang hanya tombol ke section di bawah -->
     <div id="modal3" class="modal-overlay hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="modal-content bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 rounded-t-2xl">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                        </div>
-                        <h3 class="text-2xl font-bold">Ke Website Lelang</h3>
+        <div class="modal-content bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
                     </div>
-                    <button class="close-modal text-white hover:bg-white/20 rounded-full p-2 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+                    <h3 class="text-xl font-bold">Panduan Alur Lentera</h3>
                 </div>
+                <button class="close-modal text-white hover:bg-white/20 rounded-full p-2 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
-            <div class="p-6 space-y-4">
-                <div class="bg-purple-50 rounded-xl p-4 border-l-4 border-purple-600"><p class="text-gray-700"><strong class="text-purple-900">Akses Website Resmi Lelang</strong> untuk mendaftar dan mengikuti lelang properti secara online.</p></div>
-                <div class="bg-white border-2 border-purple-200 rounded-xl p-4"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center"><span class="text-xl">🌐</span></div><div><h4 class="font-semibold text-gray-800">Website Lelang BRI</h4><a href="https://lelang.go.id/" target="_blank" class="text-purple-600 text-sm hover:underline">https://lelang.go.id/</a></div></div><p class="text-sm text-gray-600">Platform resmi lelang online Bank BRI.</p></div>
-                <div class="space-y-3">
-                    <h4 class="font-semibold text-gray-800">Langkah-langkah Akses:</h4>
-                    <div class="flex gap-3"><div class="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">1</div><div class="pt-1"><p class="text-gray-700 font-medium">Klik Tombol "Ikuti Lelang"</p><p class="text-sm text-gray-600">Pada detail properti yang Anda minati.</p></div></div>
-                    <div class="flex gap-3"><div class="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">2</div><div class="pt-1"><p class="text-gray-700 font-medium">Diarahkan ke Website Resmi</p><p class="text-sm text-gray-600">Otomatis diarahkan ke website lelang resmi (tab baru).</p></div></div>
-                    <div class="flex gap-3"><div class="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">3</div><div class="pt-1"><p class="text-gray-700 font-medium">Registrasi & Login</p><p class="text-sm text-gray-600">Buat akun atau login jika sudah punya akun.</p></div></div>
-                    <div class="flex gap-3"><div class="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">4</div><div class="pt-1"><p class="text-gray-700 font-medium">Upload Dokumen & Setor Jaminan</p><p class="text-sm text-gray-600">Upload KTP, NPWP, dan transfer uang jaminan.</p></div></div>
-                    <div class="flex gap-3"><div class="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">5</div><div class="pt-1"><p class="text-gray-700 font-medium">Ikuti Lelang Online</p><p class="text-sm text-gray-600">Ajukan penawaran pada jadwal yang ditentukan.</p></div></div>
-                </div>
-                <div class="bg-yellow-50 rounded-xl p-4 border-l-4 border-yellow-600"><p class="text-sm text-gray-700">⚠️ <strong>Catatan:</strong> Pastikan mengakses website resmi. Jangan berikan data pribadi di website tidak resmi!</p></div>
+            <div class="p-6 text-center">
+                <p class="text-gray-600 mb-6">Lihat panduan lengkap alur penggunaan Lentera di bawah halaman ini.</p>
+                <button id="scrollToGuide" class="cta-btn-primary w-full justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                    Lihat Panduan
+                </button>
             </div>
         </div>
     </div>
@@ -732,14 +1105,132 @@ body::before {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
-            // Reveal on scroll
-            var reveals = document.querySelectorAll('.reveal');
+            // // Reveal on scroll
+            // var reveals = document.querySelectorAll('.reveal');
+            // var observer = new IntersectionObserver(function(entries) {
+            //     entries.forEach(function(entry) {
+            //         if (entry.isIntersecting) entry.target.classList.add('active');
+            //     });
+            // }, { threshold: 0.1 });
+            // reveals.forEach(function(el) { observer.observe(el); });
+
+            /* ===== Scroll Reveal ===== */
+            var reveals = document.querySelectorAll(".reveal");
             var observer = new IntersectionObserver(function(entries) {
                 entries.forEach(function(entry) {
-                    if (entry.isIntersecting) entry.target.classList.add('active');
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("active");
+                    } else {
+                        entry.target.classList.remove("active");
+                    }
                 });
-            }, { threshold: 0.1 });
+            }, { threshold: 0.15 });
             reveals.forEach(function(el) { observer.observe(el); });
+
+            /* ===== Parallax ===== */
+            window.addEventListener("scroll", function() {
+                var offset = window.scrollY;
+                document.querySelectorAll("[data-depth]").forEach(function(el) {
+                    el.style.transform = "translateY(" + (offset * el.dataset.depth) + "px)";
+                });
+            });
+
+            /* ===== Stack Scroll (halaman home) ===== */
+            (function() {
+                var outer = document.querySelector('.stackscroll-outer');
+                if (!outer) return;
+
+                var steps = document.querySelectorAll('[data-step]');
+                var fill  = document.getElementById('ss-fill');
+                var dots  = document.querySelectorAll('[data-dot]');
+                var hint  = document.getElementById('ss-hint');
+                var glow  = document.getElementById('ss-glow');
+
+                var TOTAL      = steps.length;
+                var current    = -1;
+                var glowColors = ['s1','s2','s3'];
+
+                function setStep(idx) {
+                    if (idx === current) return;
+                    steps.forEach(function(el, i) {
+                        if (i === idx) { el.classList.remove('exit-up'); el.classList.add('active'); }
+                        else if (i < idx) { el.classList.remove('active'); el.classList.add('exit-up'); }
+                        else { el.classList.remove('active','exit-up'); }
+                    });
+                    dots.forEach(function(dot, i) { dot.classList.toggle('active', i <= idx); });
+                    if (fill) fill.style.height = ((idx + 1) / TOTAL * 100) + '%';
+                    if (glow) glow.className = 'stackscroll-glow ' + (glowColors[idx] || 's1') + ' active';
+                    if (hint) hint.classList.toggle('hidden', idx > 0);
+                    current = idx;
+                }
+
+                function onScroll() {
+                    var rect = outer.getBoundingClientRect();
+                    var scrolled   = -rect.top;
+                    var scrollable = outer.offsetHeight - window.innerHeight;
+                    if (scrolled < 0 || scrolled > scrollable) return;
+                    setStep(Math.min(Math.floor(scrolled / scrollable * TOTAL), TOTAL - 1));
+                }
+
+                window.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
+            })();
+
+            /* ===== Stack Scroll ===== */
+            (function() {
+                var outer = document.querySelector('.stackscroll-outer');
+                if (!outer) return;
+
+                var steps = document.querySelectorAll('[data-step]');
+                var fill  = document.getElementById('ss-fill');
+                var dots  = document.querySelectorAll('[data-dot]');
+                var hint  = document.getElementById('ss-hint');
+                var glow  = document.getElementById('ss-glow');
+
+                var TOTAL      = steps.length;
+                var current    = -1;
+                var glowColors = ['s1','s2','s3'];
+
+                function setStep(idx) {
+                    if (idx === current) return;
+                    steps.forEach(function(el, i) {
+                        if (i === idx) { el.classList.remove('exit-up'); el.classList.add('active'); }
+                        else if (i < idx) { el.classList.remove('active'); el.classList.add('exit-up'); }
+                        else { el.classList.remove('active','exit-up'); }
+                    });
+                    dots.forEach(function(dot, i) { dot.classList.toggle('active', i <= idx); });
+                    if (fill) fill.style.height = ((idx + 1) / TOTAL * 100) + '%';
+                    if (glow) glow.className = 'stackscroll-glow ' + (glowColors[idx] || 's1') + ' active';
+                    if (hint) hint.classList.toggle('hidden', idx > 0);
+                    current = idx;
+                }
+
+                function onScroll() {
+                    var rect       = outer.getBoundingClientRect();
+                    var scrolled   = -rect.top;
+                    var scrollable = outer.offsetHeight - window.innerHeight;
+                    if (scrolled < 0 || scrolled > scrollable) return;
+                    setStep(Math.min(Math.floor(scrolled / scrollable * TOTAL), TOTAL - 1));
+                }
+
+                window.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
+            })();
+
+            /* ===== Scroll to Guide (dari modal 3) ===== */
+            var scrollToGuideBtn = document.getElementById('scrollToGuide');
+            if (scrollToGuideBtn) {
+                scrollToGuideBtn.addEventListener('click', function() {
+                    document.querySelector('.modal-overlay:not(.hidden)')
+                        ?.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                    setTimeout(function() {
+                        document.getElementById('cara-daftar')
+                            .scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 150);
+                });
+            }
+
 
             // Search
             const searchInput = document.getElementById('searchInput');

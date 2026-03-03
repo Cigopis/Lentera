@@ -7,15 +7,17 @@
     {{-- HEADER --}}
     <div class="mb-16 text-center">
 
-        <h1 class="text-3xl md:text-4xl font-semibold mb-4">
+        <h1 class="text-3xl md:text-4xl font-semibold mb-1 pt-4">
             Hasil Pencarian
         </h1>
 
-        <p class="text-slate-500 mb-10">
-            Menampilkan hasil untuk:
-            <span class="font-semibold text-blue-600">
-                "{{ request('search') }}"
-            </span>
+        <p class="text-slate-500 mb-4">
+            @if(request()->filled('search'))
+                <p class="text-sm text-gray-600 mb-4">
+                    Menampilkan hasil untuk: 
+                    <span class="font-semibold">"{{ request('search') }}"</span>
+                </p>
+            @endif
         </p>
 
         {{-- SEARCH BAR --}}
@@ -25,7 +27,7 @@
 
             <input type="text"
                    name="search"
-                   value="{{ request('search') }}"
+                   value="{{ request('search') ?? '' }}"
                    placeholder="Cari aset, lokasi, atau kategori..."
                    class="w-full rounded-2xl
                           bg-white
@@ -57,8 +59,8 @@
     </div>
 
 
-    {{-- GRID KATALOG MARKETPLACE STYLE --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+    {{-- GRID KATALOG --}}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 items-stretch">
 
         @forelse($catalogs as $catalog)
 
@@ -87,7 +89,7 @@
                     Coba gunakan kata kunci lain atau periksa kembali ejaan pencarian Anda.
                 </p>
 
-                <a href="{{ route('lelang.index') }}"
+                <a href="{{ route('katalog.index') }}"
                    class="inline-block px-6 py-3
                           bg-blue-600 text-white
                           rounded-xl shadow-md
