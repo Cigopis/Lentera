@@ -628,7 +628,56 @@ document.addEventListener("DOMContentLoaded", function() {
     @endif
 
 </section>
+{{-- ===== FLOATING HELP BUTTON ===== --}}
+<a href="/bantuan"
+   class="fixed bottom-6 right-6 z-50 flex items-center gap-3
+          transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+   style="
+       background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #6366f1 100%);
+       padding: 8px 20px 8px 6px;
+       border-radius: 99px;
+       box-shadow: 0 8px 32px rgba(59,130,246,0.45), 0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.15);
+       animation: floatBounce 3s ease-in-out infinite;
+       border: 1.5px solid rgba(255,255,255,0.2);
+       text-decoration: none;
+   ">
 
+    {{-- Karakter lentera --}}
+    <img src="{{ asset('img/LENTERA2.png') }}"
+         alt="Lentera"
+         style="width: 90px; height: 90px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.18)); flex-shrink:0; margin-bottom:-8px; margin-top:-16px;">
 
+    {{-- Teks --}}
+    <div style="display:flex; flex-direction:column; line-height:1.2;">
+        <span style="font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:rgba(186,230,253,0.9); font-weight:600;">
+            Pusat Bantuan
+        </span>
+        <span style="font-size:14px; font-weight:700; color:#ffffff; white-space:nowrap; font-family:'Inter',sans-serif;">
+            Informasi Lebih Detail? Klik Disini!
+        </span>
+    </div>
+
+    {{-- Arrow --}}
+    <div style="
+        width:28px; height:28px; border-radius:50%;
+        background:rgba(255,255,255,0.18);
+        display:flex; align-items:center; justify-content:center;
+        flex-shrink:0; margin-left:2px;
+        border: 1px solid rgba(255,255,255,0.25);
+    ">
+        <svg width="13" height="13" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+    </div>
+
+</a>
+
+<style>
+    @keyframes floatBounce {
+        0%, 100% { transform: translateY(0px);  }
+        50%       { transform: translateY(-7px); }
+    }
+</style>
+{{-- ===== END FLOATING HELP BUTTON ===== --}}
 
 @endsection
