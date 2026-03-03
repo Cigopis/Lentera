@@ -70,8 +70,6 @@ class BannersResource extends Resource
                 ->default('hero')
                 ->required(),
 
-
-
             FileUpload::make('image_path')
                 ->label('Banner Image')
                 ->image()
@@ -141,9 +139,12 @@ class BannersResource extends Resource
             ->label('Banner Type')
             ->badge()
             ->color('primary'),
-
             ImageColumn::make('image_path')
-                ->label('Image'),
+                ->label('Image')
+                ->disk('public')
+                ->url(fn ($record) => asset('storage/' . $record->image_path))
+                ->height(60)
+                ->width(120),
 
             TextColumn::make('aspect_ratio')
             ->badge()
