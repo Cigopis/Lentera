@@ -33,6 +33,13 @@ class AuctionCatalog extends Model
         'official_auction_url',
         'status',
         'is_featured',
+        
+        // Spesifikasi Properti
+        'land_area',      // Luas Tanah
+        'building_area',  // Luas Bangunan
+        'bedrooms',       // Kamar Tidur
+        'bathrooms',      // Kamar Mandi
+        'floors',         // Jumlah Lantai
     ];
 
     protected $casts = [
@@ -42,6 +49,13 @@ class AuctionCatalog extends Model
         'is_featured' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        
+        // Cast untuk spesifikasi
+        'land_area' => 'decimal:2',
+        'building_area' => 'decimal:2',
+        'bedrooms' => 'integer',
+        'bathrooms' => 'integer',
+        'floors' => 'integer',
     ];
 
     public function views()
@@ -124,6 +138,12 @@ class AuctionCatalog extends Model
     public function facilities(): HasMany
     {
         return $this->hasMany(AssetFacility::class, 'catalog_id');
+    }
+    
+    // Relationship untuk Payment Proofs
+    public function paymentProofs(): HasMany
+    {
+        return $this->hasMany(PaymentProof::class, 'catalog_id');
     }
 
     public function scopeFilter($query, $request)
@@ -236,11 +256,9 @@ class AuctionCatalog extends Model
         if ($daysLeft < 0) {
             return 'Lelang sudah selesai';
         } elseif ($daysLeft == 0) {
-            return 'HARI INI - Akan hilang dari listing';
+            return 'Berakhir hari ini';
         } elseif ($daysLeft == 1) {
-            return 'BESOK (H-1) - Akan hilang dari listing';
-        } elseif ($daysLeft <= 7) {
-            return "{$daysLeft} hari lagi";
+            return 'Akan berakhir besok';
         } else {
             return "{$daysLeft} hari lagi";
         }
@@ -274,5 +292,22 @@ class AuctionCatalog extends Model
             'closed' => 'Terjual/Tutup',
             default => $this->status,
         };
+    }
+    
+    // Accessor untuk format spesifikasi
+    /**
+     * Get formatted land area
+     */
+    public function getFormattedLandAreaAttribute(): string
+    {
+        return $this->land_area ? number_format($this->land_area, 0, ',', '.') . ' m²' : '-';
+    }
+
+    /**
+     * Get formatted building area
+     */
+    public function getFormattedBuildingAreaAttribute(): string
+    {
+        return $this->building_area ? number_format($this->building_area, 0, ',', '.') . ' m²' : '-';
     }
 }

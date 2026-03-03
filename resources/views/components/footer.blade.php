@@ -53,7 +53,7 @@
                     <div class="text-sm text-gray-700 flex-1">
                         <p class="font-semibold text-gray-800">Whatsapp Only</p>
                         <p>Senin – Jumat</p>
-                        <p class="font-medium">07.30 – 16.30</p>
+                        <p class="font-medium">08.00 – 16.30</p>
                         <p class="text-xs italic text-gray-600">
                             (kecuali Sabtu, Minggu & Hari Libur)
                         </p>
