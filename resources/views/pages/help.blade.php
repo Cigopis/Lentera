@@ -806,7 +806,7 @@ body::before {
                 });
             });
 
-            // Show All FAQ
+
             const showAllBtn = document.getElementById('showAllFAQBtn');
             const additionalFAQs = document.getElementById('additionalFAQs');
             const showAllIcon = document.getElementById('showAllIcon');
