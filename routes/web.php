@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\HelpController;
 use App\Http\Controllers\AuctionController;
 use App\Http\Controllers\CatalogPageController;
 use App\Http\Controllers\PaymentProofController;

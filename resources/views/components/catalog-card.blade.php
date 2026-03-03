@@ -63,7 +63,7 @@
                     {{ $catalog->status == 'active' 
                         ? 'bg-emerald-100 text-emerald-600' 
                         : 'bg-slate-100 text-slate-500' }}">
-                    {{ $catalog->status_label }}
+                    {{ $catalog->getDeadlineStatus() }}
                 </span>
             </div>
         </div>
