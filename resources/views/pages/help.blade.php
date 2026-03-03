@@ -1101,7 +1101,6 @@ body::before {
         </div>
     </div>
 
-    <!-- JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
