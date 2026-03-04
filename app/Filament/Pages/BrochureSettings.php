@@ -14,8 +14,8 @@ class BrochureSettings extends Page implements Forms\Contracts\HasForms
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static string $view = 'filament.pages.brochure-settings';
-    protected static ?string $navigationLabel = 'Pengaturan Brosur';
-    protected static ?string $navigationGroup = 'Pengaturan Website';
+    protected static ?string $navigationLabel = 'Auction Catalogs';
+    protected static ?string $navigationGroup = 'Auction Management';
 
     public ?array $data = [];
 

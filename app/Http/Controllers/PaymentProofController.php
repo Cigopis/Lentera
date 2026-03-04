@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PaymentProof;
-use App\Models\Catalog;
+use App\Models\AuctionCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -12,14 +12,14 @@ class PaymentProofController extends Controller
     /**
      * Store payment proof
      */
-    public function store(Request $request, Catalog $catalog)
+    public function store(Request $request, AuctionCatalog $catalog)
     {
         $request->validate([
             'user_name' => 'required|string|max:255',
             'user_email' => 'required|email|max:255',
             'user_phone' => 'required|string|max:20',
             'payment_type' => 'required|in:ujl,pelunasan',
-            'proof_image' => 'required|image|mimes:jpeg,png,jpg,pdf|max:5120', // Max 5MB
+            'proof_image' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120', // Max 5MB
             'amount' => 'required|numeric|min:0',
             'notes' => 'nullable|string|max:1000',
         ], [
@@ -29,7 +29,7 @@ class PaymentProofController extends Controller
             'user_phone.required' => 'Nomor telepon wajib diisi',
             'payment_type.required' => 'Jenis pembayaran wajib dipilih',
             'proof_image.required' => 'Bukti pembayaran wajib diunggah',
-            'proof_image.image' => 'File harus berupa gambar',
+            'proof_image.file' => 'File harus berupa gambar atau PDF',
             'proof_image.mimes' => 'Format file harus: jpeg, png, jpg, atau pdf',
             'proof_image.max' => 'Ukuran file maksimal 5MB',
             'amount.required' => 'Nominal pembayaran wajib diisi',
@@ -57,8 +57,9 @@ class PaymentProofController extends Controller
 
     /**
      * Check user payment status
+     * ✅ DIPERBAIKI: Pakai AuctionCatalog
      */
-    public function checkStatus(Request $request, Catalog $catalog)
+    public function checkStatus(Request $request, AuctionCatalog $catalog)
     {
         $request->validate([
             'user_email' => 'required|email',

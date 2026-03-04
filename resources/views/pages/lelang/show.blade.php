@@ -432,12 +432,11 @@
                     </button>
 
                     {{-- DOWNLOAD BROSUR --}}
-                    <button
-                        onclick="downloadBrosur()"
-                        class="flex items-center justify-center gap-2 flex-1 border border-slate-300 py-2 rounded-xl text-sm font-medium text-center hover:bg-slate-50 transition">
+                    <a href="{{ route('catalog.download-brochure', $catalog) }}"
+                    class="flex items-center justify-center gap-2 flex-1 border border-slate-300 py-2 rounded-xl text-sm font-medium text-center hover:bg-slate-50 transition">
                         <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
                         Unduh Brosur
-                    </button>
+                    </a>
 
                     {{-- Hidden canvas untuk generate brosur --}}
                     <canvas id="brosurCanvas" style="display:none"></canvas>
@@ -558,11 +557,28 @@
         {{-- ================= UPLOAD BUKTI PEMBAYARAN ================= --}}
         {{-- Mobile: order 6 | Desktop: col-span-2 --}}
         <div class="lg:col-span-2 order-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-6 md:p-8" 
-             x-data="{ 
-                 showUpload: false, 
-                 paymentType: 'ujl',
-                 showInfo: true 
-             }">
+            x-data="{ 
+                showUpload: false, 
+                paymentType: 'ujl',
+                showInfo: true,
+                isDirty: false,
+                showConfirm: false,
+                closeModal() {
+                    if (this.isDirty) {
+                        this.showConfirm = true;
+                    } else {
+                        this.showUpload = false;
+                    }
+                },
+                confirmClose() {
+                    this.showConfirm = false;
+                    this.showUpload = false;
+                    this.isDirty = false;
+                },
+                cancelClose() {
+                    this.showConfirm = false;
+                }
+            }">
             
             {{-- INFO HEADER --}}
             <div class="flex items-start gap-4 mb-6">
@@ -668,7 +684,7 @@
             <div x-show="showUpload"
                  x-transition.opacity
                  class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-                 @click.self="showUpload = false"
+                 @click.self="closeModal()"
                  style="display: none;">
                 
                 <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -679,12 +695,13 @@
                                 <h3 class="text-xl font-bold mb-1" x-text="paymentType === 'ujl' ? 'Upload Bukti Uang Jaminan Lelang' : 'Upload Bukti Pelunasan'"></h3>
                                 <p class="text-sm text-blue-100">{{ $catalog->title }}</p>
                             </div>
-                            <button @click="showUpload = false" class="text-white hover:bg-white/20 rounded-full p-2 transition">
+                            <button @click="closeModal()" class="text-white hover:bg-white/20 rounded-full p-2 transition">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
                             </button>
                         </div>
+
                     </div>
 
                     {{-- MODAL BODY --}}
@@ -728,7 +745,8 @@
                                        required
                                        value="{{ old('user_name') }}"
                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                       placeholder="Masukkan nama lengkap sesuai KTP">
+                                       placeholder="Masukkan nama lengkap sesuai KTP"
+                                       @input="isDirty = true">
                                 @error('user_name')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -744,7 +762,8 @@
                                            required
                                            value="{{ old('user_email') }}"
                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                           placeholder="email@example.com">
+                                           placeholder="email@example.com"
+                                           @input="isDirty = true">
                                     @error('user_email')
                                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
@@ -759,7 +778,8 @@
                                            required
                                            value="{{ old('user_phone') }}"
                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                           placeholder="08xxxxxxxxxx">
+                                           placeholder="08xxxxxxxxxx"
+                                           @input="isDirty = true">
                                     @error('user_phone')
                                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
@@ -788,7 +808,8 @@
                                            min="0"
                                            value="{{ old('amount') }}"
                                            class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                           placeholder="0">
+                                           placeholder="0"
+                                           @input="isDirty = true">
                                 </div>
                                 @error('amount')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -799,22 +820,35 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Upload Bukti Transfer <span class="text-red-500">*</span>
                                 </label>
-                                <div class="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-blue-400 transition cursor-pointer"
-                                     onclick="document.getElementById('proof_image').click()">
-                                    <div class="space-y-2 text-center">
-                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <div class="text-sm text-gray-600">
-                                            <label class="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500">
-                                                <span>Klik untuk upload</span>
-                                                <input id="proof_image" name="proof_image" type="file" class="sr-only" accept="image/*,.pdf" required>
-                                            </label>
-                                            <p class="pl-1">atau drag and drop</p>
-                                        </div>
-                                        <p class="text-xs text-gray-500">PNG, JPG, PDF hingga 5MB</p>
+                                <label for="proof_image"
+                                class="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-blue-400 transition cursor-pointer"
+                                x-data="{ fileName: '' }"
+                            >
+                                <div class="space-y-2 text-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <div class="text-sm text-gray-600">
+                                        <span class="font-medium text-blue-600">Klik untuk upload</span>
+                                        <input id="proof_image"
+                                            name="proof_image"
+                                            type="file"
+                                            class="sr-only"
+                                            accept="image/jpeg,image/png,image/jpg,application/pdf"
+                                            required
+                                            @change="
+                                                fileName = $event.target.files[0]?.name ?? '';
+                                                isDirty = true;
+                                            "
+                                        >
+                                        <p class="pl-1">atau drag and drop</p>
                                     </div>
+                                    <p class="text-xs text-gray-500">PNG, JPG, PDF hingga 5MB</p>
+                                    {{-- Nama file yang dipilih --}}
+                                    <p x-show="fileName" x-text="'✅ ' + fileName"
+                                    class="text-xs text-green-600 font-medium mt-1 break-all"></p>
                                 </div>
+                            </label>
                                 @error('proof_image')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -827,14 +861,15 @@
                                 <textarea name="notes" 
                                           rows="3"
                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                          placeholder="Tambahkan catatan jika diperlukan...">{{ old('notes') }}</textarea>
+                                          placeholder="Tambahkan catatan jika diperlukan..."
+                                          @input="isDirty = true">{{ old('notes') }}</textarea>
                             </div>
                         </div>
 
                         {{-- SUBMIT BUTTONS --}}
                         <div class="flex gap-3 pt-4">
                             <button type="button" 
-                                    @click="showUpload = false"
+                                    @click="closeModal()"
                                     class="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition">
                                 Batal
                             </button>
@@ -844,6 +879,37 @@
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+            {{-- DIALOG KONFIRMASI TUTUP --}}
+            <div x-show="showConfirm"
+                x-transition.opacity
+                class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                style="display: none;">
+                <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl"
+                    @click.stop>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Batalkan pengisian?</h4>
+                            <p class="text-sm text-gray-500">Data yang sudah diisi akan hilang.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button @click="cancelClose()"
+                                class="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition">
+                            Lanjut Mengisi
+                        </button>
+                        <button @click="confirmClose()"
+                                class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition">
+                            Ya, Tutup
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

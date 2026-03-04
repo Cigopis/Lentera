@@ -7,17 +7,15 @@ use Filament\Panel;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-
 use App\Traits\LogsModelActivity;
+
 class Employee extends Authenticatable implements FilamentUser
 {
     use LogsModelActivity;
-
     use Notifiable, HasRoles;
 
     protected $guard_name = 'web';
     protected $table = 'users';
-
 
     protected $fillable = [
         'name',
@@ -35,13 +33,18 @@ class Employee extends Authenticatable implements FilamentUser
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'is_active' => 'boolean',
+        'password'          => 'hashed',
+        'is_active'         => 'boolean',
     ];
 
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->is_active;
+    }
+    
+    public function paymentProofsVerified()
+    {
+        return $this->hasMany(PaymentProof::class, 'verified_by');
     }
 
     protected static function booted()
@@ -54,5 +57,4 @@ class Employee extends Authenticatable implements FilamentUser
             $user->name = $user->full_name;
         });
     }
-
 }

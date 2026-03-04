@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuctionCatalog;
+use App\Models\BrochureDownload;
 use App\Models\Category;
 use App\Models\City;
+use App\Services\BrochureService;
 use Illuminate\Http\Request;
 
 class AuctionController extends Controller
@@ -13,7 +15,7 @@ class AuctionController extends Controller
     {
         $catalogs = AuctionCatalog::query()
             ->with(['city', 'primaryImage', 'category'])
-            ->published()  // aktif + belum expired
+            ->published()
             ->filter($request)
             ->latest()
             ->paginate(9)
@@ -40,9 +42,25 @@ class AuctionController extends Controller
             'facilities',
         ])
         ->where('slug', $slug)
-        ->published()  // aktif + belum expired
+        ->published()
         ->firstOrFail();
 
         return view('pages.lelang.show', compact('catalog'));
+    }
+
+    public function downloadBrochure(AuctionCatalog $catalog)
+    {
+        $pdfContent = app(BrochureService::class)->generate($catalog);
+
+        BrochureDownload::create([
+            'catalog_id'    => $catalog->id,
+            'ip_address'    => request()->ip(),
+            'downloaded_at' => now(),
+        ]);
+
+        return response()->streamDownload(
+            fn () => print($pdfContent),
+            'brosur-' . $catalog->slug . '.pdf'
+        );
     }
 }

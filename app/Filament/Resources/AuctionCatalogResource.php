@@ -401,7 +401,7 @@ class AuctionCatalogResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('catalog_code')
-                    ->label('Kode')
+                    ->label('Code')
                     ->searchable()
                     ->sortable()
                     ->copyable()
@@ -409,7 +409,7 @@ class AuctionCatalogResource extends Resource
                     ->weight('bold'),
 
                 Tables\Columns\TextColumn::make('title')
-                    ->label('Judul')
+                    ->label('Title')
                     ->searchable()
                     ->sortable()
                     ->limit(50)
@@ -422,7 +422,7 @@ class AuctionCatalogResource extends Resource
                     }),
 
                 Tables\Columns\TextColumn::make('category.name')
-                    ->label('Kategori')
+                    ->label('Category')
                     ->sortable()
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -433,17 +433,17 @@ class AuctionCatalogResource extends Resource
                     }),
 
                 Tables\Columns\TextColumn::make('city.name')
-                    ->label('Kota')
+                    ->label('City')
                     ->sortable()
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('reserve_price')
-                    ->label('Nilai Limit')
+                    ->label('Limit Value')
                     ->money('IDR')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('auction_date')
-                    ->label('Tgl Lelang')
+                    ->label('Auction Date')
                     ->date('d/m/Y')
                     ->sortable()
                     ->description(function (AuctionCatalog $record): ?string {
@@ -482,7 +482,7 @@ class AuctionCatalogResource extends Resource
                     }),
 
                 Tables\Columns\IconColumn::make('is_featured')
-                    ->label('Unggulan')
+                    ->label('Featured')
                     ->boolean()
                     ->trueIcon('heroicon-o-star')
                     ->falseIcon('heroicon-o-star')
@@ -490,7 +490,7 @@ class AuctionCatalogResource extends Resource
                     ->falseColor('gray'),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
+                    ->label('Created At')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -498,12 +498,12 @@ class AuctionCatalogResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('category_id')
-                    ->label('Kategori')
+                    ->label('Category')
                     ->relationship('category', 'name')
                     ->preload(),
 
                 Tables\Filters\SelectFilter::make('city_id')
-                    ->label('Kota')
+                    ->label('City')
                     ->relationship('city', 'name')
                     ->searchable()
                     ->preload(),
@@ -517,7 +517,7 @@ class AuctionCatalogResource extends Resource
                     ]),
 
                 Tables\Filters\Filter::make('is_featured')
-                    ->label('Unggulan')
+                    ->label('Featured')
                     ->query(fn (Builder $query): Builder => $query->where('is_featured', true)),
 
                 Tables\Filters\Filter::make('deadline_soon')

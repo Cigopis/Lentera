@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+
 class PaymentProof extends Model
 {
     use HasFactory;
@@ -30,19 +31,19 @@ class PaymentProof extends Model
     ];
 
     /**
-     * Relationship dengan Catalog
+     * Relationship dengan AuctionCatalog
      */
     public function catalog()
     {
-        return $this->belongsTo(Catalog::class);
+        return $this->belongsTo(AuctionCatalog::class, 'catalog_id');
     }
 
     /**
      * Relationship dengan User (verifier)
      */
-    public function verifiedBy()
+    public function verifier()
     {
-        return $this->belongsTo(User::class, 'verified_by');
+        return $this->belongsTo(Employee::class, 'verified_by');
     }
 
     /**
