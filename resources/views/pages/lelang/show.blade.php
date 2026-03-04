@@ -394,6 +394,12 @@
                 {{-- BATAS WAKTU --}}
                 <div class="mb-6 space-y-2 text-sm text-slate-600">
                     <div>
+                        <p class="text-slate-400">Tanggal Mulai Lelang</p>
+                        <p class="font-medium">
+                            {{ $catalog->created_at->format('d F Y') }}
+                        </p>
+                    </div>
+                    <div>
                         <p class="text-slate-400">Batas Akhir Setor Uang Jaminan</p>
                         <p class="font-medium">
                             {{ $catalog->auction_date->copy()->subDay()->format('d F Y') }}
