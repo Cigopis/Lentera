@@ -346,7 +346,7 @@
 
                     @php $daysLeft = $catalog->getDaysUntilAuction(); @endphp
 
-                    @if($daysLeft !== null && $daysLeft >= 0 && $daysLeft <= 7)
+                    @if($daysLeft !== null && $daysLeft >= 0)
                         <span class="px-3 py-1 text-xs rounded-full font-semibold
                             {{ $daysLeft == 0 ? 'bg-red-100 text-red-600' : 
                             ($daysLeft == 1 ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600') }}">

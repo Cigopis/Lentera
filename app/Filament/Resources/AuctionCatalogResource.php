@@ -11,6 +11,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\ImageColumn;
 use App\Models\AuctionCatalog;
+use App\Models\CatalogImage;
 use App\Models\Category;
 use App\Models\SubCategory;
 use App\Models\City;
@@ -27,6 +28,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuctionCatalogResource extends Resource
 {
@@ -164,23 +167,30 @@ class AuctionCatalogResource extends Resource
                                     ->columns(2),
 
                                 Forms\Components\Section::make('Jadwal Lelang')
-                                    ->schema([
-                                        Forms\Components\DatePicker::make('auction_date')
-                                            ->label('Tanggal Akhir Lelang')
-                                            ->required()
-                                            ->native(false)
-                                            ->displayFormat('d/m/Y')
-                                            ->helperText('Tanggal pelaksanaan selesai lelang')
-                                            ->minDate(now()),
+                                ->schema([
+                                    Forms\Components\DatePicker::make('auction_date')
+                                        ->label('Tanggal Penutupan Lelang')
+                                        ->required()
+                                        ->native(false)
+                                        ->displayFormat('d/m/Y')
+                                        ->helperText('Tanggal saat lelang resmi ditutup')
+                                        ->minDate(now()),
 
-                                        Forms\Components\TextInput::make('official_auction_url')
-                                            ->label('Link Lelang Resmi')
-                                            ->url()
-                                            ->placeholder('https://lelang.go.id/catalog/xxx')
-                                            ->helperText('URL ke website lelang resmi')
-                                            ->columnSpanFull(),
-                                    ])
-                                    ->columns(1),
+                                    Forms\Components\TimePicker::make('auction_time')
+                                        ->label('Jam Penutupan')
+                                        ->seconds(false)
+                                        ->displayFormat('H:i')
+                                        ->placeholder('10:00')
+                                        ->helperText('Jam saat lelang ditutup · contoh: 10:00 WIB'),
+
+                                    Forms\Components\TextInput::make('official_auction_url')
+                                        ->label('Link Lelang Resmi')
+                                        ->url()
+                                        ->placeholder('https://lelang.go.id/catalog/xxx')
+                                        ->helperText('URL ke website lelang resmi')
+                                        ->columnSpanFull(),
+                                ])
+                                ->columns(2),
                             ]),
 
                         // TAB 3: SPESIFIKASI ASET
@@ -250,8 +260,9 @@ class AuctionCatalogResource extends Resource
                         Forms\Components\Tabs\Tab::make('Media')
                             ->icon('heroicon-o-photo')
                             ->schema([
-                                Forms\Components\Section::make('Gambar Katalog')
-                                    ->description('Upload foto-foto aset (minimal 1, maksimal 10)')
+                                // ── UPLOAD GAMBAR BARU ──────────────────────────────────────────
+                                Forms\Components\Section::make('Upload Foto Baru')
+                                    ->description('Upload foto-foto aset (maks 10 foto, format otomatis dikonversi ke WebP)')
                                     ->schema([
                                         Forms\Components\FileUpload::make('catalogImages')
                                             ->label('Foto Aset')
@@ -286,14 +297,16 @@ class AuctionCatalogResource extends Resource
                                                 // Hanya buat CatalogImage saat EDIT (record sudah ada)
                                                 // Saat CREATE ditangani oleh afterCreate() di CreateAuctionCatalog
                                                 if ($record && $record->exists) {
-                                                    $hasPrimary = \App\Models\CatalogImage::where('catalog_id', $record->id)
+                                                    $hasPrimary = CatalogImage::where('catalog_id', $record->id)
                                                         ->where('is_primary', true)
                                                         ->exists();
 
-                                                    \App\Models\CatalogImage::create([
-                                                        'catalog_id' => $record->id,
-                                                        'image_path' => $path,
+                                                    CatalogImage::create([
+                                                        'catalog_id'  => $record->id,
+                                                        'image_path'  => $path,
                                                         'is_primary'  => !$hasPrimary,
+                                                        'is_visible'  => true,
+                                                        'sort_order'  => CatalogImage::where('catalog_id', $record->id)->max('sort_order') + 1,
                                                     ]);
                                                 }
 
@@ -301,6 +314,16 @@ class AuctionCatalogResource extends Resource
                                             })
                                             ->columnSpanFull(),
                                     ]),
+
+                                // ── KELOLA GAMBAR YANG SUDAH ADA ────────────────────────────────
+                                Forms\Components\Section::make('Kelola Foto')
+                                    ->description('Drag untuk ubah urutan · Klik bintang untuk set thumbnail · Toggle mata untuk sembunyikan')
+                                    ->schema([
+                                        // Livewire component — semua aksi langsung tanpa reload halaman
+                                        Forms\Components\View::make('components.catalog-image-manager-wrapper')
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->hidden(fn ($record) => $record === null),
                             ]),
 
                         // TAB 5: STATUS & PENGATURAN
@@ -343,31 +366,29 @@ class AuctionCatalogResource extends Resource
                                             ->content(fn ($record) => $record?->creator?->name ?? '-'),
 
                                         Forms\Components\Placeholder::make('deadline_info')
-                                            ->label('Info Deadline')
-                                            ->content(function ($record) {
-                                                if (!$record || !$record->auction_date) {
-                                                    return '-';
-                                                }
+                                                ->label('Info Deadline')
+                                                ->content(function ($record) {
+                                                    if (!$record || !$record->auction_date) return '-';
 
-                                                $auctionDate = Carbon::parse($record->auction_date);
-                                                $now = Carbon::now();
-                                                $daysLeft = $now->diffInDays($auctionDate, false);
+                                                    $daysLeft = $record->getDaysUntilAuction();
 
-                                                if ($daysLeft < 0) {
-                                                    return '⚫ Lelang sudah selesai';
-                                                } elseif ($daysLeft == 0) {
-                                                    return '🔴 HARI INI - Akan hilang dari listing publik';
-                                                } elseif ($daysLeft == 1) {
-                                                    return '🟠 BESOK (1 hari lagi) - Akan hilang dari listing publik';
-                                                } elseif ($daysLeft <= 7) {
-                                                    return "🟡 {$daysLeft} hari lagi";
-                                                } else {
-                                                    return "🟢 {$daysLeft} hari lagi";
-                                                }
-                                            }),
-                                    ])
-                                    ->columns(2)
-                                    ->hidden(fn ($record) => $record === null),
+                                                    $icon = match (true) {
+                                                        $daysLeft < 0   => '⚫',
+                                                        $daysLeft === 0 => '🔴',
+                                                        $daysLeft === 1 => '🟠',
+                                                        $daysLeft <= 7  => '🟡',
+                                                        default         => '🟢',
+                                                    };
+
+                                                    $note = ($daysLeft === 0 || $daysLeft === 1)
+                                                        ? ' — Akan hilang dari listing publik'
+                                                        : '';
+
+                                                    return $icon . ' ' . $record->getDeadlineStatus() . $note;
+                                                }),
+                                        ])
+                                        ->columns(2)
+                                        ->hidden(fn ($record) => $record === null),
                             ]),
                     ])
                     ->columnSpanFull()
@@ -425,24 +446,23 @@ class AuctionCatalogResource extends Resource
                     ->label('Tgl Lelang')
                     ->date('d/m/Y')
                     ->sortable()
-                    ->description(function ($record) {
+                    ->description(function (AuctionCatalog $record): ?string {
                         if (!$record->auction_date) return null;
 
-                        $auctionDate = Carbon::parse($record->auction_date);
-                        $now = Carbon::now();
-                        $daysLeft = $now->diffInDays($auctionDate, false);
+                        $daysLeft = $record->getDaysUntilAuction();
 
-                        if ($daysLeft < 0) {
-                            return '⚫ Selesai';
-                        } elseif ($daysLeft == 0) {
-                            return '🔴 Hari ini';
-                        } elseif ($daysLeft == 1) {
-                            return '🟠 Besok (H-1)';
-                        } elseif ($daysLeft <= 7) {
-                            return "🟡 {$daysLeft} hari";
-                        } else {
-                            return "🟢 {$daysLeft} hari";
-                        }
+                        $icon = match (true) {
+                            $daysLeft < 0   => '⚫',
+                            $daysLeft === 0 => '🔴',
+                            $daysLeft === 1 => '🟠',
+                            $daysLeft <= 7  => '🟡',
+                            default         => '🟢',
+                        };
+
+                        // getDeadlineStatus() sudah include jam jika diisi, misal:
+                        // "11 hari lagi · pukul 10.00 WIB"
+                        // "Besok · pukul 14.00 WIB"
+                        return $icon . ' ' . $record->getDeadlineStatus();
                     }),
 
                 Tables\Columns\TextColumn::make('status')
@@ -544,6 +564,19 @@ class AuctionCatalogResource extends Resource
                             ->title('Status berhasil diubah')
                             ->success()
                             ->send();
+                    }),
+                Tables\Actions\Action::make('download_brochure')
+                    ->label('Download Brosur')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->action(function ($record) {
+
+                        $pdfContent = app(\App\Services\BrochureService::class)
+                            ->generate($record);
+
+                        return response()->streamDownload(
+                            fn () => print($pdfContent),
+                            'brosur-' . $record->slug . '.pdf'
+                        );
                     }),
             ])
             ->bulkActions([

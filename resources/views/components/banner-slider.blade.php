@@ -59,7 +59,7 @@
                 :class="active === {{ $index }} 
                     ? 'w-10 bg-blue-500 shadow-lg shadow-blue-500/40' 
                     : 'w-4 bg-gray-400 hover:bg-gray-600'"
-            ></button>
+            ></button> 
         @endforeach
     </div>
     @endif

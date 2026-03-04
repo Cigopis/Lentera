@@ -30,6 +30,7 @@ class AuctionCatalog extends Model
         'deposit_amount',
         'address',
         'auction_date',
+        'auction_time',   
         'official_auction_url',
         'status',
         'is_featured',
@@ -113,6 +114,7 @@ class AuctionCatalog extends Model
         return $this->belongsTo(City::class);
     }
 
+    
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -120,14 +122,22 @@ class AuctionCatalog extends Model
 
     public function catalogImages(): HasMany
     {
-        return $this->hasMany(CatalogImage::class, 'catalog_id');
+        return $this->hasMany(CatalogImage::class, 'catalog_id')
+            ->orderBy('sort_order')
+            ->orderBy('id');
     }
+
+    public function brochures()
+    {
+        return $this->hasMany(Brochure::class, 'auction_catalog_id');
+    }
+
 
     public function primaryImage()
     {
         return $this->hasOne(CatalogImage::class, 'catalog_id')
-                    ->where('is_primary', true)
-                    ->latest();
+            ->where('is_primary', true)
+            ->where('is_visible', true);
     }
 
     public function specifications(): HasOne
@@ -235,33 +245,44 @@ class AuctionCatalog extends Model
 
     public function getDaysUntilAuction(): ?int
     {
-        if (!$this->auction_date) {
-            return null;
-        }
+        if (!$this->auction_date) return null;
 
-        $auctionDate = Carbon::parse($this->auction_date);
-        $now = Carbon::now();
-
-        return $now->diffInDays($auctionDate, false);
+        return (int) Carbon::today()->diffInDays(
+            Carbon::parse($this->auction_date)->startOfDay(),
+            false
+        );
     }
 
     public function getDeadlineStatus(): string
     {
         $daysLeft = $this->getDaysUntilAuction();
 
-        if ($daysLeft === null) {
-            return 'Tidak ada tanggal lelang';
+        if ($daysLeft === null) return 'Tidak ada tanggal lelang';
+
+        $jamLabel = $this->auction_time
+            ? ', ' . Carbon::parse($this->auction_time)->format('H.i') . ' WIB'
+            : '';
+
+        if ($daysLeft < 0)  return 'Lelang sudah ditutup';
+        if ($daysLeft === 0) return 'Ditutup hari ini' . $jamLabel;
+        if ($daysLeft === 1) return 'Besok' . $jamLabel;
+        if ($daysLeft === 2) return 'Lusa' . $jamLabel;
+
+        if ($daysLeft <= 7) {
+            Carbon::setLocale('id');
+            $tgl = $this->auction_date->translatedFormat('l, j M'); // "Senin, 14 Jul"
+            return $tgl . $jamLabel;
         }
 
-        if ($daysLeft < 0) {
-            return 'Lelang sudah selesai';
-        } elseif ($daysLeft == 0) {
-            return 'Berakhir hari ini';
-        } elseif ($daysLeft == 1) {
-            return 'Akan berakhir besok';
-        } else {
-            return "{$daysLeft} hari lagi";
-        }
+        return "Tutup {$daysLeft} hari lagi" . $jamLabel;
+    }
+
+    // Accessor datetime gabungan — berguna untuk sorting/countdown
+    public function getAuctionClosesAtAttribute(): ?Carbon
+    {
+        if (!$this->auction_date) return null;
+        $time = $this->auction_time ?? '00:00';
+        return Carbon::parse($this->auction_date->format('Y-m-d') . ' ' . $time);
     }
 
     public function getFormattedReservePriceAttribute(): string
@@ -310,4 +331,15 @@ class AuctionCatalog extends Model
     {
         return $this->building_area ? number_format($this->building_area, 0, ',', '.') . ' m²' : '-';
     }
+
+    public function visibleImages(): HasMany
+    {
+        return $this->hasMany(CatalogImage::class, 'catalog_id')
+            ->where('is_visible', true)
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
+
+
 }

@@ -582,8 +582,11 @@ document.addEventListener("DOMContentLoaded", function() {
 </script>
 
 
+
+
 {{-- ===================== HERO ==================== --}}
 <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+   
 
     @if($heroBanners->isNotEmpty())
         <x-banner-slider :banners="$heroBanners" variant="hero" />
