@@ -30,17 +30,17 @@ class PaymentProof extends Model
     ];
 
     /**
-     * Relationship dengan Catalog
+     * Relationship dengan AuctionCatalog
      */
     public function catalog()
     {
-        return $this->belongsTo(Catalog::class);
+        return $this->belongsTo(AuctionCatalog::class, 'catalog_id');
     }
 
     /**
      * Relationship dengan User (verifier)
      */
-    public function verifiedBy()
+    public function verifier()
     {
         return $this->belongsTo(User::class, 'verified_by');
     }

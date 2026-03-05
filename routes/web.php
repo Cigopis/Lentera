@@ -25,6 +25,12 @@ Route::get('/katalog', [CatalogPageController::class, 'index'])
 
 Route::get('/employees', [EmployeeController::class, 'index']);
 
+Route::bind('catalog', function ($value) {
+    return \App\Models\AuctionCatalog::where('id', $value)
+        ->orWhere('slug', $value)
+        ->firstOrFail();
+});
+
 // Routes untuk payment proof
 Route::post('/catalog/{catalog}/payment-proof', [PaymentProofController::class, 'store'])
     ->name('payment-proof.store');

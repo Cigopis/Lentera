@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('payment_proofs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('catalog_id')->constrained('catalogs')->onDelete('cascade');
+            $table->foreignId('catalog_id')->constrained('auction_catalogs')->onDelete('cascade'); // ✅ DIPERBAIKI!
             $table->string('user_name'); // Nama peserta lelang
             $table->string('user_email'); // Email peserta
             $table->string('user_phone'); // No. Telepon peserta

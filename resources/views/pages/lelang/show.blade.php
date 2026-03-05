@@ -3,17 +3,13 @@
 @section('content')
 <div class="max-w-7xl mx-auto px-4 md:px-6 pt-24 md:pt-28 pb-12">
 
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         function shareCatalog() {
             const url = "{{ $catalog->official_auction_url ?? url()->current() }}";
             const title = "{{ $catalog->title }}";
-
             if (navigator.share) {
-                navigator.share({
-                    title: title,
-                    text: "Lihat detail aset lelang berikut:",
-                    url: url
-                });
+                navigator.share({ title: title, text: "Lihat detail aset lelang berikut:", url: url });
             } else {
                 navigator.clipboard.writeText(url);
                 alert("Link berhasil disalin:\n" + url);
@@ -24,125 +20,352 @@
             const canvas = document.getElementById('brosurCanvas');
             const ctx = canvas.getContext('2d');
 
-            canvas.width  = 1200;
-            canvas.height = 800;
+            canvas.width  = 1600;
+            canvas.height = 1000;
 
-            const bg = ctx.createLinearGradient(0, 0, 1200, 800);
-            bg.addColorStop(0, '#1e3a8a');
-            bg.addColorStop(1, '#1e40af');
-            ctx.fillStyle = bg;
-            ctx.fillRect(0, 0, 1200, 800);
+            // =============================================
+            // BACKGROUND PUTIH FULL (frame luar)
+            // =============================================
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, 1600, 1000);
 
-            ctx.fillStyle = '#f59e0b';
-            ctx.fillRect(0, 0, 8, 800);
+            // =============================================
+            // PANEL BIRU UTAMA (dengan padding frame putih)
+            // =============================================
+            ctx.fillStyle = "#1565C0";
+            ctx.fillRect(30, 30, 1540, 940);
 
-            const imgSrc = '{{ $catalog->primaryImage?->image_path ? asset("storage/".$catalog->primaryImage->image_path) : asset("img/default.jpg") }}';
+            // =============================================
+            // AKSEN DIAGONAL BIRU TUA (kiri)
+            // =============================================
+            ctx.fillStyle = "#0D47A1";
+            ctx.beginPath();
+            ctx.moveTo(30, 30);
+            ctx.lineTo(880, 30);
+            ctx.lineTo(580, 970);
+            ctx.lineTo(30, 970);
+            ctx.closePath();
+            ctx.fill();
+
+            // =============================================
+            // AKSEN VERTIKAL KANAN (oranye + biru + putih)
+            // =============================================
+            // Strip oranye kanan
+            ctx.fillStyle = "#FF8C00";
+            ctx.fillRect(1540, 30, 30, 940);
+            // Strip biru tua kanan dalam
+            ctx.fillStyle = "#0D47A1";
+            ctx.fillRect(1510, 30, 30, 940);
+            // Strip putih dalam
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(1490, 30, 20, 940);
+
+            // =============================================
+            // LOAD GAMBAR FOTO
+            // =============================================
+            const mainImageSrc = '{{ $catalog->primaryImage?->image_path ? asset("storage/".$catalog->primaryImage->image_path) : asset("img/default.jpg") }}';
             const img = new Image();
-            img.crossOrigin = 'anonymous';
+            img.crossOrigin = "anonymous";
+            await new Promise(res => { img.onload = res; img.onerror = res; img.src = mainImageSrc; });
 
-            await new Promise((resolve, reject) => {
-                img.onload = resolve;
-                img.onerror = reject;
-                img.src = imgSrc;
-            }).catch(() => {});
-
-            if (img.complete && img.naturalWidth > 0) {
+            if (img.naturalWidth > 0) {
+                // Foto besar atas
                 ctx.save();
-                roundRect(ctx, 40, 40, 520, 720, 16);
+                roundRect(ctx, 60, 60, 740, 520, 12);
                 ctx.clip();
-                
-                const scale = Math.max(520 / img.width, 720 / img.height);
-                const sw = img.width  * scale;
-                const sh = img.height * scale;
-                const sx = 40  + (520 - sw) / 2;
-                const sy = 40  + (720 - sh) / 2;
-                ctx.drawImage(img, sx, sy, sw, sh);
+                const s1 = Math.max(740 / img.width, 520 / img.height);
+                ctx.drawImage(img, 60 + (740 - img.width * s1) / 2, 60 + (520 - img.height * s1) / 2, img.width * s1, img.height * s1);
+                ctx.restore();
+
+                // Foto kecil kiri bawah
+                ctx.save();
+                roundRect(ctx, 60, 600, 360, 220, 12);
+                ctx.clip();
+                const s2 = Math.max(360 / img.width, 220 / img.height);
+                ctx.drawImage(img, 60 + (360 - img.width * s2) / 2, 600 + (220 - img.height * s2) / 2, img.width * s2, img.height * s2);
+                ctx.restore();
+
+                // Foto kecil kanan bawah
+                ctx.save();
+                roundRect(ctx, 430, 600, 360, 220, 12);
+                ctx.clip();
+                const s3 = Math.max(360 / img.width, 220 / img.height);
+                ctx.drawImage(img, 430 + (360 - img.width * s3) / 2, 600 + (220 - img.height * s3) / 2, img.width * s3, img.height * s3);
                 ctx.restore();
             }
 
-            ctx.save();
-            roundRect(ctx, 40, 40, 520, 720, 16);
-            ctx.clip();
-            const overlay = ctx.createLinearGradient(40, 40, 560, 760);
-            overlay.addColorStop(0, 'rgba(0,0,0,0)');
-            overlay.addColorStop(1, 'rgba(0,0,0,0.4)');
-            ctx.fillStyle = overlay;
-            ctx.fillRect(40, 40, 520, 720);
-            ctx.restore();
-
-            const cx = 600;
-
-            ctx.fillStyle = '#10b981';
-            roundRect(ctx, cx, 50, 140, 36, 18);
+            // =============================================
+            // PANEL PUTIH KANAN
+            // =============================================
+            ctx.fillStyle = "#ffffff";
+            roundRect(ctx, 840, 50, 640, 900, 20);
             ctx.fill();
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 14px sans-serif';
-            ctx.fillText('{{ $catalog->status_label }}', cx + 20, 73);
 
-            ctx.fillStyle = 'rgba(255,255,255,0.3)';
-            ctx.font = '13px sans-serif';
-            ctx.fillText('KATALOG LELANG', cx, 130);
+            const px = 840; // panel x start
+            const pw = 640; // panel width
 
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 32px sans-serif';
-            const title = '{{ addslashes($catalog->title) }}';
-            wrapText(ctx, title, cx, 170, 560, 40);
+            // =============================================
+            // HEADER: LOGO LENTERA + LOGO BRI
+            // =============================================
+            const logoLentera = new Image();
+            logoLentera.crossOrigin = "anonymous";
+            await new Promise(res => { logoLentera.onload = res; logoLentera.onerror = res; logoLentera.src = "{{ asset('img/logo-lentera.png') }}"; });
 
-            ctx.strokeStyle = '#f59e0b';
-            ctx.lineWidth = 2;
+            if (logoLentera.naturalWidth > 0) {
+                ctx.drawImage(logoLentera, px + 20, 65, 150, 55);
+            } else {
+                // Fallback teks logo Lentera
+                ctx.fillStyle = "#FF6B00";
+                ctx.beginPath();
+                ctx.arc(px + 32, 93, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#1565C0";
+                ctx.font = "bold 24px sans-serif";
+                ctx.fillText("entera", px + 50, 100);
+            }
+
+            const logoBRI = new Image();
+            logoBRI.crossOrigin = "anonymous";
+            await new Promise(res => { logoBRI.onload = res; logoBRI.onerror = res; logoBRI.src = "{{ asset('img/logo-bri.png') }}"; });
+
+            if (logoBRI.naturalWidth > 0) {
+                ctx.drawImage(logoBRI, px + pw - 160, 65, 130, 55);
+            } else {
+                // Fallback teks logo BRI
+                ctx.fillStyle = "#003087";
+                ctx.font = "bold 22px sans-serif";
+                ctx.textAlign = "right";
+                ctx.fillText("⊞ BRI", px + pw - 20, 100);
+                ctx.textAlign = "left";
+            }
+
+            // Garis pemisah header
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.moveTo(cx, 270);
-            ctx.lineTo(cx + 560, 270);
+            ctx.moveTo(px + 20, 130);
+            ctx.lineTo(px + pw - 20, 130);
             ctx.stroke();
 
-            ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            ctx.font = '16px sans-serif';
-            ctx.fillText('📍 {{ addslashes($catalog->city->name) }}', cx, 305);
+            // =============================================
+            // JUDUL (kotak biru)
+            // =============================================
+            ctx.fillStyle = "#1d4ed8";
+            roundRect(ctx, px + 20, 145, pw - 40, 80, 12);
+            ctx.fill();
 
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            ctx.font = '14px sans-serif';
-            ctx.fillText('NILAI LIMIT', cx, 360);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 24px sans-serif";
+            const titleLines = getWrappedLines(ctx, "{{ addslashes($catalog->title) }}", pw - 80, "bold 24px sans-serif");
+            let titleY = titleLines.length === 1 ? 195 : 178;
+            titleLines.forEach(line => {
+                ctx.fillText(line, px + 30, titleY);
+                titleY += 32;
+            });
 
-            ctx.fillStyle = '#fbbf24';
-            ctx.font = 'bold 36px sans-serif';
-            ctx.fillText('{{ addslashes($catalog->formatted_reserve_price) }}', cx, 400);
+            // =============================================
+            // LOKASI (dengan ikon pin merah)
+            // =============================================
+            ctx.fillStyle = "#ef4444";
+            ctx.font = "bold 16px sans-serif";
+            // Ikon pin (sederhana dengan canvas)
+            ctx.beginPath();
+            ctx.arc(px + 33, 252, 9, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(px + 33, 252, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#ef4444";
+            ctx.beginPath();
+            ctx.moveTo(px + 33, 261);
+            ctx.lineTo(px + 28, 268);
+            ctx.lineTo(px + 38, 268);
+            ctx.closePath();
+            ctx.fill();
 
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            ctx.font = '14px sans-serif';
-            ctx.fillText('UANG JAMINAN', cx, 445);
+            ctx.fillStyle = "#ef4444";
+            ctx.font = "500 16px sans-serif";
+            ctx.fillText("{{ addslashes($catalog->city->name) }}", px + 48, 258);
 
-            ctx.fillStyle = '#93c5fd';
-            ctx.font = 'bold 28px sans-serif';
-            ctx.fillText('{{ addslashes($catalog->formatted_deposit_amount) }}', cx, 480);
+            // =============================================
+            // KOTAK AKSES DAN FASILITAS
+            // =============================================
+            ctx.fillStyle = "#f1f5f9";
+            roundRect(ctx, px + 20, 280, pw - 40, 115, 10);
+            ctx.fill();
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.lineWidth = 1;
+            roundRect(ctx, px + 20, 280, pw - 40, 115, 10);
+            ctx.stroke();
 
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            ctx.font = '14px sans-serif';
-            ctx.fillText('BATAS PENAWARAN', cx, 530);
+            ctx.fillStyle = "#1e293b";
+            ctx.font = "bold 15px sans-serif";
+            ctx.fillText("AKSES DAN FASILITAS", px + 35, 305);
 
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 20px sans-serif';
-            ctx.fillText('{{ $catalog->auction_date->format("d F Y") }} — 23.00 WIB', cx, 558);
+            ctx.font = "15px sans-serif";
+            let yF = 328;
+            @foreach($catalog->facilities->take(3) as $facility)
+                ctx.fillStyle = "#3b82f6";
+                ctx.fillText("•", px + 35, yF);
+                ctx.fillStyle = "#374151";
+                ctx.fillText("{{ addslashes($facility->name) }}", px + 52, yF);
+                yF += 26;
+            @endforeach
 
-            ctx.fillStyle = 'rgba(255,255,255,0.08)';
-            ctx.fillRect(600, 680, 560, 80);
+            // =============================================
+            // WHATSAPP ICON + NOMOR
+            // =============================================
+            // Lingkaran hijau WA
+            ctx.fillStyle = "#25D366";
+            ctx.beginPath();
+            ctx.arc(px + 42, 430, 22, 0, Math.PI * 2);
+            ctx.fill();
 
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.font = 'bold 18px sans-serif';
-            ctx.fillText('Lentera Kertajaya', cx + 20, 715);
+            // Ikon WA (handset sederhana)
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 22px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("✆", px + 42, 438);
+            ctx.textAlign = "left";
 
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.font = '13px sans-serif';
-            ctx.fillText('lentera.id', cx + 20, 738);
+            ctx.fillStyle = "#16a34a";
+            ctx.font = "bold 28px sans-serif";
+            ctx.fillText("{{ $catalog->admin_phone ?? '085731599031' }}", px + 74, 438);
 
-            @if($catalog->official_auction_url)
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.font = '12px sans-serif';
-            ctx.fillText('{{ addslashes($catalog->official_auction_url) }}', cx + 20, 755);
-            @endif
+            ctx.fillStyle = "#374151";
+            ctx.font = "16px sans-serif";
+            ctx.fillText("{{ $catalog->admin_name ?? 'Lentera Kertajaya' }}", px + 74, 462);
 
-            const link = document.createElement('a');
-            link.download = 'brosur-{{ Str::slug($catalog->title) }}.png';
-            link.href = canvas.toDataURL('image/png');
+            // Garis pemisah
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(px + 20, 482);
+            ctx.lineTo(px + pw - 20, 482);
+            ctx.stroke();
+
+            // =============================================
+            // QR CODE dengan background biru + tulisan SCAN ME
+            // =============================================
+            const qrUrl = "{{ $catalog->official_auction_url ?? url()->current() }}";
+            const qrSize = 130;
+            const qrBoxX = px + 20;
+            const qrBoxY = 492;
+            const qrBoxW = 180;
+            const qrBoxH = 170;
+
+            // Background biru QR
+            ctx.fillStyle = "#1e3a8a";
+            roundRect(ctx, qrBoxX, qrBoxY, qrBoxW, qrBoxH, 10);
+            ctx.fill();
+
+            // Tulisan SCAN ME
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 13px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("SCAN ME", qrBoxX + qrBoxW / 2, qrBoxY + 20);
+            ctx.textAlign = "left";
+
+            // Generate & draw QR
+            const qrContainer = document.createElement("div");
+            qrContainer.style.position = "absolute";
+            qrContainer.style.left = "-9999px";
+            qrContainer.style.top = "-9999px";
+            document.body.appendChild(qrContainer);
+
+            try {
+                new QRCode(qrContainer, {
+                    text: qrUrl,
+                    width: qrSize,
+                    height: qrSize,
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+                await new Promise(r => setTimeout(r, 500));
+
+                const qrCanvas = qrContainer.querySelector("canvas");
+                const qrImgEl = qrContainer.querySelector("img");
+
+                if (qrCanvas) {
+                    ctx.drawImage(qrCanvas, qrBoxX + (qrBoxW - qrSize) / 2, qrBoxY + 28, qrSize, qrSize);
+                } else if (qrImgEl) {
+                    const qi = new Image();
+                    await new Promise(r => { qi.onload = r; qi.onerror = r; qi.src = qrImgEl.src; });
+                    if (qi.naturalWidth > 0) ctx.drawImage(qi, qrBoxX + (qrBoxW - qrSize) / 2, qrBoxY + 28, qrSize, qrSize);
+                }
+            } catch(e) {
+                ctx.fillStyle = "#e2e8f0";
+                ctx.fillRect(qrBoxX + 25, qrBoxY + 28, qrSize, qrSize);
+            }
+            document.body.removeChild(qrContainer);
+
+            // =============================================
+            // TOMBOL MERAH "Cek Sekarang / Lelang.go.id"
+            // =============================================
+            const btnX = px + 215;
+            const btnY = 492;
+
+            ctx.fillStyle = "#374151";
+            ctx.font = "bold 18px sans-serif";
+            ctx.fillText("Cek Sekarang", btnX, btnY + 40);
+
+            ctx.fillStyle = "#ef4444";
+            roundRect(ctx, btnX, btnY + 55, 220, 50, 25);
+            ctx.fill();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 18px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("Lelang.go.id", btnX + 110, btnY + 86);
+            ctx.textAlign = "left";
+
+            // =============================================
+            // GARIS PEMISAH SEBELUM HARGA
+            // =============================================
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(px + 20, 675);
+            ctx.lineTo(px + pw - 20, 675);
+            ctx.stroke();
+
+            // =============================================
+            // HARGA (dengan background biru)
+            // =============================================
+            ctx.fillStyle = "#1e3a8a";
+            roundRect(ctx, px + 20, 690, pw - 40, 70, 10);
+            ctx.fill();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 42px sans-serif";
+            ctx.textAlign = "right";
+            ctx.fillText("{{ addslashes($catalog->formatted_reserve_price) }}", px + pw - 30, 743);
+            ctx.textAlign = "left";
+
+            // =============================================
+            // GARIS PEMISAH FOOTER
+            // =============================================
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(px + 20, 773);
+            ctx.lineTo(px + pw - 20, 773);
+            ctx.stroke();
+
+            // =============================================
+            // FOOTER TEKS
+            // =============================================
+            ctx.fillStyle = "#64748b";
+            ctx.font = "13px sans-serif";
+            const footerText = "{{ isset($catalog->brosur_footer_text) && $catalog->brosur_footer_text ? addslashes($catalog->brosur_footer_text) : 'Katalog LELANG LENTERA \u2013 Lelang Terpadu BRI Kertajaya. Akses dan pendaftaran resmi melalui https://lelang.go.id/' }}";
+            wrapText(ctx, footerText, px + 20, 800, pw - 40, 20);
+
+            // =============================================
+            // DOWNLOAD
+            // =============================================
+            const link = document.createElement("a");
+            link.download = "brosur-{{ Str::slug($catalog->title) }}.png";
+            link.href = canvas.toDataURL("image/png");
             link.click();
         }
 
@@ -174,6 +397,24 @@
                 }
             }
             ctx.fillText(line, x, y);
+        }
+
+        function getWrappedLines(ctx, text, maxWidth, font) {
+            ctx.font = font;
+            const words = text.split(' ');
+            const lines = [];
+            let line = '';
+            for (let i = 0; i < words.length; i++) {
+                const test = line + words[i] + ' ';
+                if (ctx.measureText(test).width > maxWidth && i > 0) {
+                    lines.push(line.trim());
+                    line = words[i] + ' ';
+                } else {
+                    line = test;
+                }
+            }
+            lines.push(line.trim());
+            return lines;
         }
     </script>
 
@@ -503,6 +744,7 @@
         @endif
 
         {{-- ================= UPLOAD BUKTI PEMBAYARAN ================= --}}
+        {{-- Mobile: order 6 | Desktop: col-span-2 --}}
         <div class="lg:col-span-2 order-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-6 md:p-8" 
              x-data="{ 
                  showUpload: false, 
@@ -510,6 +752,7 @@
                  showInfo: true 
              }">
             
+            {{-- INFO HEADER --}}
             <div class="flex items-start gap-4 mb-6">
                 <div class="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -527,6 +770,7 @@
                 </div>
             </div>
 
+            {{-- PANDUAN SINGKAT --}}
             <div x-show="showInfo" 
                  x-transition
                  class="bg-white rounded-xl p-5 mb-6 border border-blue-100">
@@ -589,6 +833,7 @@
                 </div>
             </div>
 
+            {{-- UPLOAD BUTTON --}}
             <div class="flex flex-col sm:flex-row gap-3">
                 <button @click="showUpload = true; paymentType = 'ujl'" 
                         class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
@@ -615,6 +860,7 @@
                  style="display: none;">
                 
                 <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                    {{-- MODAL HEADER --}}
                     <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl">
                         <div class="flex items-center justify-between">
                             <div>
@@ -629,6 +875,7 @@
                         </div>
                     </div>
 
+                    {{-- MODAL BODY --}}
                     <form action="{{ route('payment-proof.store', $catalog) }}" 
                           method="POST" 
                           enctype="multipart/form-data"
@@ -637,6 +884,7 @@
 
                         <input type="hidden" name="payment_type" :value="paymentType">
 
+                        {{-- INFORMASI NILAI --}}
                         <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
                             <div class="grid md:grid-cols-2 gap-4 text-sm">
                                 <div>
@@ -650,6 +898,7 @@
                             </div>
                         </div>
 
+                        {{-- DATA PESERTA --}}
                         <div class="space-y-4">
                             <h4 class="font-bold text-gray-800 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -706,6 +955,7 @@
                             </div>
                         </div>
 
+                        {{-- BUKTI PEMBAYARAN --}}
                         <div class="space-y-4">
                             <h4 class="font-bold text-gray-800 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -733,11 +983,36 @@
                                 @enderror
                             </div>
 
-                            <div>
+                            <div x-data="{ 
+                                fileName: '', 
+                                fileSize: '', 
+                                previewUrl: null,
+                                handleFileSelect(event) {
+                                    const file = event.target.files[0];
+                                    if (file) {
+                                        this.fileName = file.name;
+                                        this.fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                                        
+                                        // Preview untuk gambar
+                                        if (file.type.startsWith('image/')) {
+                                            const reader = new FileReader();
+                                            reader.onload = (e) => {
+                                                this.previewUrl = e.target.result;
+                                            };
+                                            reader.readAsDataURL(file);
+                                        } else {
+                                            this.previewUrl = null;
+                                        }
+                                    }
+                                }
+                            }">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Upload Bukti Transfer <span class="text-red-500">*</span>
                                 </label>
+                                
+                                <!-- Upload Area -->
                                 <div class="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-blue-400 transition cursor-pointer"
+                                     :class="fileName ? 'border-green-400 bg-green-50' : ''"
                                      onclick="document.getElementById('proof_image').click()">
                                     <div class="space-y-2 text-center">
                                         <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -746,13 +1021,48 @@
                                         <div class="text-sm text-gray-600">
                                             <label class="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500">
                                                 <span>Klik untuk upload</span>
-                                                <input id="proof_image" name="proof_image" type="file" class="sr-only" accept="image/*,.pdf" required>
+                                                <input id="proof_image" 
+                                                       name="proof_image" 
+                                                       type="file" 
+                                                       class="sr-only" 
+                                                       accept="image/*,.pdf" 
+                                                       required
+                                                       @change="handleFileSelect($event)">
                                             </label>
                                             <p class="pl-1">atau drag and drop</p>
                                         </div>
                                         <p class="text-xs text-gray-500">PNG, JPG, PDF hingga 5MB</p>
                                     </div>
                                 </div>
+
+                                <!-- File Info & Preview -->
+                                <div x-show="fileName" x-transition class="mt-3">
+                                    <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                                        <!-- Preview Image -->
+                                        <div x-show="previewUrl" class="mb-3">
+                                            <img :src="previewUrl" class="w-full h-40 object-cover rounded-lg">
+                                        </div>
+                                        
+                                        <!-- File Details -->
+                                        <div class="flex items-start gap-3">
+                                            <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-green-900" x-text="fileName"></p>
+                                                <p class="text-xs text-green-700" x-text="fileSize"></p>
+                                            </div>
+                                            <button type="button" 
+                                                    @click="fileName = ''; fileSize = ''; previewUrl = null; document.getElementById('proof_image').value = '';"
+                                                    class="text-green-600 hover:text-green-800">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 @error('proof_image')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -769,6 +1079,7 @@
                             </div>
                         </div>
 
+                        {{-- SUBMIT BUTTONS --}}
                         <div class="flex gap-3 pt-4">
                             <button type="button" 
                                     @click="showUpload = false"
