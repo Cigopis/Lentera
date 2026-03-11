@@ -1,11 +1,8 @@
 <?php
-
 namespace App\Filament\Resources\GuideStepsResource\Pages;
-
 use App\Filament\Resources\GuideStepsResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
-
 class CreateGuideSteps extends CreateRecord
 {
     protected static string $resource = GuideStepsResource::class;
@@ -14,5 +11,8 @@ class CreateGuideSteps extends CreateRecord
         $data['created_by'] = auth()->id();
         return $data;
     }
-
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

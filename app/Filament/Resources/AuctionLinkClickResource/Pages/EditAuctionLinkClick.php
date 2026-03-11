@@ -8,12 +8,14 @@ use Filament\Resources\Pages\EditRecord;
 
 class EditAuctionLinkClick extends EditRecord
 {
-    protected static string $resource = AuctionLinkClickResource::class;
 
+protected static string $resource = AuctionLinkClickResource::class;
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\DeleteAction::make(),
-        ];
+        return [Actions\DeleteAction::make()];
+    }
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

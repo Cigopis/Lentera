@@ -9,4 +9,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateBrochureDownload extends CreateRecord
 {
     protected static string $resource = BrochureDownloadResource::class;
-}
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
+    }

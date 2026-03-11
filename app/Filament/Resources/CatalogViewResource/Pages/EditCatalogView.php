@@ -8,12 +8,15 @@ use Filament\Resources\Pages\EditRecord;
 
 class EditCatalogView extends EditRecord
 {
-    protected static string $resource = CatalogViewResource::class;
 
+protected static string $resource = CatalogViewResource::class;
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\DeleteAction::make(),
-        ];
+        return [Actions\DeleteAction::make()];
     }
-}
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
+    }

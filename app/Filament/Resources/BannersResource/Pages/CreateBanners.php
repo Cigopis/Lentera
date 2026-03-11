@@ -9,11 +9,15 @@ use Filament\Facades\Filament;
 
 class CreateBanners extends CreateRecord
 {
-    protected static string $resource = BannersResource::class;
 
+protected static string $resource = BannersResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['created_by'] = Filament::auth()->id();
         return $data;
+    }
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }
