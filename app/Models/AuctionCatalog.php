@@ -30,40 +30,61 @@ class AuctionCatalog extends Model
         'deposit_amount',
         'address',
         'auction_date',
-        'auction_time',   
+        'auction_time',
         'official_auction_url',
         'status',
         'is_featured',
-        
+
         // Spesifikasi Properti
-        'land_area',      // Luas Tanah
-        'building_area',  // Luas Bangunan
-        'bedrooms',       // Kamar Tidur
-        'bathrooms',      // Kamar Mandi
-        'floors',         // Jumlah Lantai
+        'land_area',
+        'building_area',
+        'bedrooms',
+        'bathrooms',
+        'floors',
     ];
 
     protected $casts = [
-        'auction_date' => 'date',
-        'reserve_price' => 'decimal:2',
+        'auction_date'   => 'date',
+        'reserve_price'  => 'decimal:2',
         'deposit_amount' => 'decimal:2',
-        'is_featured' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        
-        // Cast untuk spesifikasi
-        'land_area' => 'decimal:2',
-        'building_area' => 'decimal:2',
-        'bedrooms' => 'integer',
-        'bathrooms' => 'integer',
-        'floors' => 'integer',
+        'is_featured'    => 'boolean',
+        'created_at'     => 'datetime',
+        'updated_at'     => 'datetime',
+        'land_area'      => 'decimal:2',
+        'building_area'  => 'decimal:2',
+        'bedrooms'       => 'integer',
+        'bathrooms'      => 'integer',
+        'floors'         => 'integer',
     ];
 
-    public function views()
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS CONSTANTS
+    |--------------------------------------------------------------------------
+    | draft   → belum dipublikasi
+    | active  → aktif/tersedia, lelang sedang berjalan
+    | sold    → TERJUAL — ada pemenang, tapi tanggal mungkin masih sisa
+    | closed  → TUTUP   — lelang dibatalkan / ditutup tanpa pemenang
+    |--------------------------------------------------------------------------
+    */
+    const STATUS_DRAFT  = 'draft';
+    const STATUS_ACTIVE = 'active';
+    const STATUS_SOLD   = 'sold';
+    const STATUS_CLOSED = 'closed';
+
+    public static function statusOptions(): array
     {
-        return $this->hasMany(CatalogView::class, 'catalog_id');
+        return [
+            self::STATUS_DRAFT  => 'Draft',
+            self::STATUS_ACTIVE => 'Tersedia',
+            self::STATUS_SOLD   => 'Terjual',
+            self::STATUS_CLOSED => 'Tutup',
+        ];
     }
 
+    // -------------------------------------------------------------------------
+    // Boot
+    // -------------------------------------------------------------------------
 
     protected static function boot()
     {
@@ -73,7 +94,7 @@ class AuctionCatalog extends Model
             if (empty($catalog->slug)) {
                 $catalog->slug = Str::slug($catalog->title);
             }
-            
+
             if (empty($catalog->created_by) && auth()->check()) {
                 $catalog->created_by = auth()->id();
             }
@@ -86,74 +107,50 @@ class AuctionCatalog extends Model
         });
     }
 
+    // -------------------------------------------------------------------------
+    // Scopes
+    // -------------------------------------------------------------------------
+
     public function scopeNotExpired($query)
     {
         return $query->where('auction_date', '>=', now()->toDateString());
     }
 
+    /**
+     * Hanya tampilkan di listing publik:
+     * - status active (tersedia)
+     * - status sold (terjual) selama tanggal belum lewat — biar pengunjung
+     *   masih bisa melihat aset yang sudah ada pemenangnya
+     * - tanggal belum lewat
+     */
     public function scopePublished($query)
     {
-        return $query->where('status', 'active')
-                    ->where('auction_date', '>=', now()->toDateString());
+        return $query->whereIn('status', [self::STATUS_ACTIVE, self::STATUS_SOLD])
+                     ->where('auction_date', '>=', now()->toDateString());
     }
 
-
-    public function category(): BelongsTo
+    public function scopeActive($query)
     {
-        return $this->belongsTo(Category::class);
+        return $query->where('status', self::STATUS_ACTIVE);
     }
 
-    public function subCategory(): BelongsTo
+    public function scopeFeatured($query)
     {
-        return $this->belongsTo(SubCategory::class);
+        return $query->where('is_featured', true);
     }
 
-
-    public function city(): BelongsTo
+    public function scopeExpiringToday($query)
     {
-        return $this->belongsTo(City::class);
+        return $query->whereDate('auction_date', '=', Carbon::today())
+                     ->orWhereDate('auction_date', '=', Carbon::tomorrow());
     }
 
-    
-    public function creator(): BelongsTo
+    public function scopeUpcomingWeek($query)
     {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function catalogImages(): HasMany
-    {
-        return $this->hasMany(CatalogImage::class, 'catalog_id')
-            ->orderBy('sort_order')
-            ->orderBy('id');
-    }
-
-    public function brochures()
-    {
-        return $this->hasMany(Brochure::class, 'auction_catalog_id');
-    }
-
-
-    public function primaryImage()
-    {
-        return $this->hasOne(CatalogImage::class, 'catalog_id')
-            ->where('is_primary', true)
-            ->where('is_visible', true);
-    }
-
-    public function specifications(): HasOne
-    {
-        return $this->hasOne(AssetSpecification::class, 'catalog_id');
-    }
-
-    public function facilities(): HasMany
-    {
-        return $this->hasMany(AssetFacility::class, 'catalog_id');
-    }
-    
-    // Relationship untuk Payment Proofs
-    public function paymentProofs(): HasMany
-    {
-        return $this->hasMany(PaymentProof::class, 'catalog_id');
+        return $query->whereBetween('auction_date', [
+            Carbon::today(),
+            Carbon::today()->addWeek(),
+        ]);
     }
 
     public function scopeFilter($query, $request)
@@ -161,14 +158,14 @@ class AuctionCatalog extends Model
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
-                ->orWhere('description', 'like', '%' . $request->search . '%')
-                ->orWhere('address', 'like', '%' . $request->search . '%')
-                ->orWhereHas('category', function ($q2) use ($request) {
-                    $q2->where('name', 'like', '%' . $request->search . '%');
-                });
+                  ->orWhere('description', 'like', '%' . $request->search . '%')
+                  ->orWhere('address', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('category', function ($q2) use ($request) {
+                      $q2->where('name', 'like', '%' . $request->search . '%');
+                  });
             });
         }
-        
+
         if ($request->filled('kategori')) {
             $query->whereHas('category', function ($q) use ($request) {
                 $q->where('slug', $request->kategori);
@@ -201,48 +198,99 @@ class AuctionCatalog extends Model
         return $query;
     }
 
+    // -------------------------------------------------------------------------
+    // Relationships
+    // -------------------------------------------------------------------------
+
+    public function views()
+    {
+        return $this->hasMany(CatalogView::class, 'catalog_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function subCategory(): BelongsTo
+    {
+        return $this->belongsTo(SubCategory::class);
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function catalogImages(): HasMany
+    {
+        return $this->hasMany(CatalogImage::class, 'catalog_id')
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
+    public function visibleImages(): HasMany
+    {
+        return $this->hasMany(CatalogImage::class, 'catalog_id')
+            ->where('is_visible', true)
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
+    public function primaryImage()
+    {
+        return $this->hasOne(CatalogImage::class, 'catalog_id')
+            ->where('is_primary', true)
+            ->where('is_visible', true);
+    }
+
+    public function brochures()
+    {
+        return $this->hasMany(Brochure::class, 'auction_catalog_id');
+    }
+
+    public function specifications(): HasOne
+    {
+        return $this->hasOne(AssetSpecification::class, 'catalog_id');
+    }
+
+    public function facilities(): HasMany
+    {
+        return $this->hasMany(AssetFacility::class, 'catalog_id');
+    }
+
+    public function paymentProofs(): HasMany
+    {
+        return $this->hasMany(PaymentProof::class, 'catalog_id');
+    }
+
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class, 'catalog_id');
     }
 
-    public function scopeActive($query)
-    {
-        return $query->where('status', 'active');
-    }
-
-    public function scopeFeatured($query)
-    {
-        return $query->where('is_featured', true);
-    }
-
-    public function scopeExpiringToday($query)
-    {
-        return $query->whereDate('auction_date', '=', Carbon::today())
-                     ->orWhereDate('auction_date', '=', Carbon::tomorrow());
-    }
-
-    public function scopeUpcomingWeek($query)
-    {
-        return $query->whereBetween('auction_date', [
-            Carbon::today(),
-            Carbon::today()->addWeek()
-        ]);
-    }
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
 
     public function isExpiringSoon(): bool
     {
-        if (!$this->auction_date) {
-            return false;
-        }
+        if (!$this->auction_date) return false;
 
-        $auctionDate = Carbon::parse($this->auction_date);
-        $now = Carbon::now();
-        $daysLeft = $now->diffInDays($auctionDate, false);
+        $daysLeft = Carbon::today()->diffInDays(
+            Carbon::parse($this->auction_date)->startOfDay(),
+            false
+        );
 
         return $daysLeft <= 1 && $daysLeft >= 0;
     }
 
+    /** Selisih hari dari hari ini ke tanggal lelang (negatif jika sudah lewat) */
     public function getDaysUntilAuction(): ?int
     {
         if (!$this->auction_date) return null;
@@ -263,21 +311,24 @@ class AuctionCatalog extends Model
             ? ', ' . Carbon::parse($this->auction_time)->format('H.i') . ' WIB'
             : '';
 
-        if ($daysLeft < 0)  return 'Lelang sudah ditutup';
+        if ($daysLeft < 0)   return 'Lelang sudah ditutup';
         if ($daysLeft === 0) return 'Ditutup hari ini' . $jamLabel;
         if ($daysLeft === 1) return 'Besok' . $jamLabel;
         if ($daysLeft === 2) return 'Lusa' . $jamLabel;
 
         if ($daysLeft <= 7) {
             Carbon::setLocale('id');
-            $tgl = $this->auction_date->translatedFormat('l, j M'); // "Senin, 14 Jul"
+            $tgl = $this->auction_date->translatedFormat('l, j M');
             return $tgl . $jamLabel;
         }
 
         return "Tutup {$daysLeft} hari lagi" . $jamLabel;
     }
 
-    // Accessor datetime gabungan — berguna untuk sorting/countdown
+    // -------------------------------------------------------------------------
+    // Accessors
+    // -------------------------------------------------------------------------
+
     public function getAuctionClosesAtAttribute(): ?Carbon
     {
         if (!$this->auction_date) return null;
@@ -295,51 +346,53 @@ class AuctionCatalog extends Model
         return 'Rp ' . number_format($this->deposit_amount, 0, ',', '.');
     }
 
-    public function getStatusColorAttribute(): string
-    {
-        return match($this->status) {
-            'draft' => 'gray',
-            'active' => 'green',
-            'closed' => 'red',
-            default => 'gray',
-        };
-    }
-
-    public function getStatusLabelAttribute(): string
-    {
-        return match($this->status) {
-            'draft' => 'Draft',
-            'active' => 'Tersedia',
-            'closed' => 'Terjual/Tutup',
-            default => $this->status,
-        };
-    }
-    
-    // Accessor untuk format spesifikasi
-    /**
-     * Get formatted land area
-     */
     public function getFormattedLandAreaAttribute(): string
     {
         return $this->land_area ? number_format($this->land_area, 0, ',', '.') . ' m²' : '-';
     }
 
-    /**
-     * Get formatted building area
-     */
     public function getFormattedBuildingAreaAttribute(): string
     {
         return $this->building_area ? number_format($this->building_area, 0, ',', '.') . ' m²' : '-';
     }
 
-    public function visibleImages(): HasMany
+    public function getStatusLabelAttribute(): string
     {
-        return $this->hasMany(CatalogImage::class, 'catalog_id')
-            ->where('is_visible', true)
-            ->orderBy('sort_order')
-            ->orderBy('id');
+        return match ($this->status) {
+            self::STATUS_DRAFT  => 'Draft',
+            self::STATUS_ACTIVE => 'Tersedia',
+            self::STATUS_SOLD   => 'Terjual',
+            self::STATUS_CLOSED => 'Tutup',
+            default             => $this->status,
+        };
     }
 
+    public function getStatusColorAttribute(): string
+    {
+        return match ($this->status) {
+            self::STATUS_DRAFT  => 'gray',
+            self::STATUS_ACTIVE => 'green',
+            self::STATUS_SOLD   => 'amber',
+            self::STATUS_CLOSED => 'red',
+            default             => 'gray',
+        };
+    }
 
+    /** Apakah aset ini sudah terjual (status sold) */
+    public function isSold(): bool
+    {
+        return $this->status === self::STATUS_SOLD;
+    }
 
+    /** Apakah aset ini ditutup/batal (status closed) */
+    public function isClosed(): bool
+    {
+        return $this->status === self::STATUS_CLOSED;
+    }
+
+    /** Apakah aset ini tidak bisa ditawar lagi (sold atau closed) */
+    public function isFinished(): bool
+    {
+        return in_array($this->status, [self::STATUS_SOLD, self::STATUS_CLOSED]);
+    }
 }

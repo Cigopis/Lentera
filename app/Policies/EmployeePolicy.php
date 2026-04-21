@@ -58,18 +58,15 @@ class EmployeePolicy
             return false;
         }
     }
-
-    // Super admin bisa hapus siapa saja (selain kasus di atas)
+    
     if ($user->hasRole('super admin')) {
         return true;
     }
 
-    // Admin tidak boleh hapus super admin
     if ($user->hasRole('admin')) {
         return ! $model->hasRole('super admin');
     }
 
-    // Staff hanya bisa hapus dirinya sendiri
     return $user->id === $model->id;
 }
 

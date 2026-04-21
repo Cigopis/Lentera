@@ -167,30 +167,30 @@ class AuctionCatalogResource extends Resource
                                     ->columns(2),
 
                                 Forms\Components\Section::make('Jadwal Lelang')
-                                ->schema([
-                                    Forms\Components\DatePicker::make('auction_date')
-                                        ->label('Tanggal Penutupan Lelang')
-                                        ->required()
-                                        ->native(false)
-                                        ->displayFormat('d/m/Y')
-                                        ->helperText('Tanggal saat lelang resmi ditutup')
-                                        ->minDate(now()),
+                                    ->schema([
+                                        Forms\Components\DatePicker::make('auction_date')
+                                            ->label('Tanggal Penutupan Lelang')
+                                            ->required()
+                                            ->native(false)
+                                            ->displayFormat('d/m/Y')
+                                            ->helperText('Tanggal saat lelang resmi ditutup')
+                                            ->minDate(now()),
 
-                                    Forms\Components\TimePicker::make('auction_time')
-                                        ->label('Jam Penutupan')
-                                        ->seconds(false)
-                                        ->displayFormat('H:i')
-                                        ->placeholder('10:00')
-                                        ->helperText('Jam saat lelang ditutup · contoh: 10:00 WIB'),
+                                        Forms\Components\TimePicker::make('auction_time')
+                                            ->label('Jam Penutupan')
+                                            ->seconds(false)
+                                            ->displayFormat('H:i')
+                                            ->placeholder('10:00')
+                                            ->helperText('Jam saat lelang ditutup · contoh: 10:00 WIB'),
 
-                                    Forms\Components\TextInput::make('official_auction_url')
-                                        ->label('Link Lelang Resmi')
-                                        ->url()
-                                        ->placeholder('https://lelang.go.id/catalog/xxx')
-                                        ->helperText('URL ke website lelang resmi')
-                                        ->columnSpanFull(),
-                                ])
-                                ->columns(2),
+                                        Forms\Components\TextInput::make('official_auction_url')
+                                            ->label('Link Lelang Resmi')
+                                            ->url()
+                                            ->placeholder('https://lelang.go.id/catalog/xxx')
+                                            ->helperText('URL ke website lelang resmi')
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->columns(2),
                             ]),
 
                         // TAB 3: SPESIFIKASI ASET
@@ -260,7 +260,6 @@ class AuctionCatalogResource extends Resource
                         Forms\Components\Tabs\Tab::make('Media')
                             ->icon('heroicon-o-photo')
                             ->schema([
-                                // ── UPLOAD GAMBAR BARU ──────────────────────────────────────────
                                 Forms\Components\Section::make('Upload Foto Baru')
                                     ->description('Upload foto-foto aset (maks 10 foto, format otomatis dikonversi ke WebP)')
                                     ->schema([
@@ -272,17 +271,12 @@ class AuctionCatalogResource extends Resource
                                             ->directory('catalog_images')
                                             ->disk('public')
                                             ->imageEditor()
-                                            ->imageEditorAspectRatios([
-                                                '16:9',
-                                                '4:3',
-                                                '1:1',
-                                            ])
+                                            ->imageEditorAspectRatios(['16:9', '4:3', '1:1'])
                                             ->maxFiles(10)
                                             ->required(fn (string $operation) => $operation === 'create')
                                             ->getUploadedFileNameForStorageUsing(fn ($file) => Str::uuid() . '.webp')
                                             ->saveUploadedFileUsing(function ($file, $get, $state, $record) {
                                                 $manager = new ImageManager(new Driver());
-
                                                 $image = $manager->read($file)
                                                     ->resize(1920, null, function ($constraint) {
                                                         $constraint->aspectRatio();
@@ -291,22 +285,19 @@ class AuctionCatalogResource extends Resource
                                                     ->toWebp(80);
 
                                                 $path = 'catalog_images/' . Str::uuid() . '.webp';
-
                                                 Storage::disk('public')->put($path, (string) $image);
 
-                                                // Hanya buat CatalogImage saat EDIT (record sudah ada)
-                                                // Saat CREATE ditangani oleh afterCreate() di CreateAuctionCatalog
                                                 if ($record && $record->exists) {
                                                     $hasPrimary = CatalogImage::where('catalog_id', $record->id)
                                                         ->where('is_primary', true)
                                                         ->exists();
 
                                                     CatalogImage::create([
-                                                        'catalog_id'  => $record->id,
-                                                        'image_path'  => $path,
-                                                        'is_primary'  => !$hasPrimary,
-                                                        'is_visible'  => true,
-                                                        'sort_order'  => CatalogImage::where('catalog_id', $record->id)->max('sort_order') + 1,
+                                                        'catalog_id' => $record->id,
+                                                        'image_path' => $path,
+                                                        'is_primary' => !$hasPrimary,
+                                                        'is_visible' => true,
+                                                        'sort_order' => CatalogImage::where('catalog_id', $record->id)->max('sort_order') + 1,
                                                     ]);
                                                 }
 
@@ -315,11 +306,9 @@ class AuctionCatalogResource extends Resource
                                             ->columnSpanFull(),
                                     ]),
 
-                                // ── KELOLA GAMBAR YANG SUDAH ADA ────────────────────────────────
                                 Forms\Components\Section::make('Kelola Foto')
                                     ->description('Drag untuk ubah urutan · Klik bintang untuk set thumbnail · Toggle mata untuk sembunyikan')
                                     ->schema([
-                                        // Livewire component — semua aksi langsung tanpa reload halaman
                                         Forms\Components\View::make('components.catalog-image-manager-wrapper')
                                             ->columnSpanFull(),
                                     ])
@@ -335,14 +324,14 @@ class AuctionCatalogResource extends Resource
                                         Forms\Components\Select::make('status')
                                             ->label('Status Katalog')
                                             ->required()
-                                            ->options([
-                                                'draft' => 'Draft',
-                                                'active' => 'Aktif/Tersedia',
-                                                'closed' => 'Terjual/Tutup',
-                                            ])
-                                            ->default('draft')
+                                            ->options(AuctionCatalog::statusOptions())
+                                            ->default(AuctionCatalog::STATUS_DRAFT)
                                             ->native(false)
-                                            ->helperText('Status saat ini dari katalog'),
+                                            ->helperText('
+                                                Tersedia = lelang sedang berjalan · 
+                                                Terjual = ada pemenang, tanggal mungkin masih berjalan · 
+                                                Tutup = lelang dibatalkan/ditutup tanpa pemenang
+                                            '),
 
                                         Forms\Components\Toggle::make('is_featured')
                                             ->label('Katalog Unggulan')
@@ -366,29 +355,29 @@ class AuctionCatalogResource extends Resource
                                             ->content(fn ($record) => $record?->creator?->name ?? '-'),
 
                                         Forms\Components\Placeholder::make('deadline_info')
-                                                ->label('Info Deadline')
-                                                ->content(function ($record) {
-                                                    if (!$record || !$record->auction_date) return '-';
+                                            ->label('Info Deadline')
+                                            ->content(function ($record) {
+                                                if (!$record || !$record->auction_date) return '-';
 
-                                                    $daysLeft = $record->getDaysUntilAuction();
+                                                $daysLeft = $record->getDaysUntilAuction();
 
-                                                    $icon = match (true) {
-                                                        $daysLeft < 0   => '⚫',
-                                                        $daysLeft === 0 => '🔴',
-                                                        $daysLeft === 1 => '🟠',
-                                                        $daysLeft <= 7  => '🟡',
-                                                        default         => '🟢',
-                                                    };
+                                                $icon = match (true) {
+                                                    $daysLeft < 0   => '⚫',
+                                                    $daysLeft === 0 => '🔴',
+                                                    $daysLeft === 1 => '🟠',
+                                                    $daysLeft <= 7  => '🟡',
+                                                    default         => '🟢',
+                                                };
 
-                                                    $note = ($daysLeft === 0 || $daysLeft === 1)
-                                                        ? ' — Akan hilang dari listing publik'
-                                                        : '';
+                                                $note = ($daysLeft === 0 || $daysLeft === 1)
+                                                    ? ' — Akan hilang dari listing publik'
+                                                    : '';
 
-                                                    return $icon . ' ' . $record->getDeadlineStatus() . $note;
-                                                }),
-                                        ])
-                                        ->columns(2)
-                                        ->hidden(fn ($record) => $record === null),
+                                                return $icon . ' ' . $record->getDeadlineStatus() . $note;
+                                            }),
+                                    ])
+                                    ->columns(2)
+                                    ->hidden(fn ($record) => $record === null),
                             ]),
                     ])
                     ->columnSpanFull()
@@ -415,10 +404,7 @@ class AuctionCatalogResource extends Resource
                     ->limit(50)
                     ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
                         $state = $column->getState();
-                        if (strlen($state) <= 50) {
-                            return null;
-                        }
-                        return $state;
+                        return strlen($state) <= 50 ? null : $state;
                     }),
 
                 Tables\Columns\TextColumn::make('category.name')
@@ -426,10 +412,10 @@ class AuctionCatalogResource extends Resource
                     ->sortable()
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'Bangunan' => 'info',
-                        'Tanah' => 'success',
+                        'Bangunan'  => 'info',
+                        'Tanah'     => 'success',
                         'Kendaraan' => 'warning',
-                        default => 'gray',
+                        default     => 'gray',
                     }),
 
                 Tables\Columns\TextColumn::make('city.name')
@@ -459,9 +445,6 @@ class AuctionCatalogResource extends Resource
                             default         => '🟢',
                         };
 
-                        // getDeadlineStatus() sudah include jam jika diisi, misal:
-                        // "11 hari lagi · pukul 10.00 WIB"
-                        // "Besok · pukul 14.00 WIB"
                         return $icon . ' ' . $record->getDeadlineStatus();
                     }),
 
@@ -469,16 +452,18 @@ class AuctionCatalogResource extends Resource
                     ->label('Status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'draft' => 'gray',
-                        'active' => 'success',
-                        'closed' => 'danger',
-                        default => 'gray',
+                        AuctionCatalog::STATUS_DRAFT   => 'gray',
+                        AuctionCatalog::STATUS_ACTIVE  => 'success',
+                        AuctionCatalog::STATUS_SOLD    => 'warning',   // amber/kuning
+                        AuctionCatalog::STATUS_CLOSED  => 'danger',
+                        default                        => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'draft' => 'Draft',
-                        'active' => 'Tersedia',
-                        'closed' => 'Terjual/Tutup',
-                        default => $state,
+                        AuctionCatalog::STATUS_DRAFT   => 'Draft',
+                        AuctionCatalog::STATUS_ACTIVE  => 'Tersedia',
+                        AuctionCatalog::STATUS_SOLD    => 'Terjual',
+                        AuctionCatalog::STATUS_CLOSED  => 'Tutup',
+                        default                        => $state,
                     }),
 
                 Tables\Columns\IconColumn::make('is_featured')
@@ -510,11 +495,7 @@ class AuctionCatalogResource extends Resource
 
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
-                    ->options([
-                        'draft' => 'Draft',
-                        'active' => 'Tersedia',
-                        'closed' => 'Terjual/Tutup',
-                    ]),
+                    ->options(AuctionCatalog::statusOptions()),
 
                 Tables\Filters\Filter::make('is_featured')
                     ->label('Featured')
@@ -533,7 +514,7 @@ class AuctionCatalogResource extends Resource
                     ->query(fn (Builder $query): Builder =>
                         $query->whereBetween('auction_date', [
                             Carbon::today(),
-                            Carbon::today()->addWeek()
+                            Carbon::today()->addWeek(),
                         ])
                     )
                     ->toggle(),
@@ -549,29 +530,25 @@ class AuctionCatalogResource extends Resource
                     ->form([
                         Forms\Components\Select::make('status')
                             ->label('Status Baru')
-                            ->options([
-                                'draft' => 'Draft',
-                                'active' => 'Tersedia',
-                                'closed' => 'Terjual/Tutup',
-                            ])
+                            ->options(AuctionCatalog::statusOptions())
                             ->required()
-                            ->native(false),
+                            ->native(false)
+                            ->helperText('Terjual = ada pemenang · Tutup = dibatalkan/ditutup tanpa pemenang'),
                     ])
                     ->action(function (AuctionCatalog $record, array $data): void {
                         $record->update(['status' => $data['status']]);
 
                         Notification::make()
-                            ->title('Status berhasil diubah')
+                            ->title('Status berhasil diubah menjadi ' . AuctionCatalog::statusOptions()[$data['status']])
                             ->success()
                             ->send();
                     }),
+
                 Tables\Actions\Action::make('download_brochure')
                     ->label('Download Brosur')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function ($record) {
-
-                        $pdfContent = app(\App\Services\BrochureService::class)
-                            ->generate($record);
+                        $pdfContent = app(\App\Services\BrochureService::class)->generate($record);
 
                         return response()->streamDownload(
                             fn () => print($pdfContent),
@@ -584,18 +561,25 @@ class AuctionCatalogResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
 
                     Tables\Actions\BulkAction::make('activate')
-                        ->label('Aktifkan')
+                        ->label('Aktifkan (Tersedia)')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()
-                        ->action(fn (Collection $records) => $records->each->update(['status' => 'active'])),
+                        ->action(fn (Collection $records) => $records->each->update(['status' => AuctionCatalog::STATUS_ACTIVE])),
+
+                    Tables\Actions\BulkAction::make('mark_sold')
+                        ->label('Tandai Terjual')
+                        ->icon('heroicon-o-trophy')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->action(fn (Collection $records) => $records->each->update(['status' => AuctionCatalog::STATUS_SOLD])),
 
                     Tables\Actions\BulkAction::make('close')
-                        ->label('Tandai Terjual/Tutup')
+                        ->label('Tandai Tutup')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->requiresConfirmation()
-                        ->action(fn (Collection $records) => $records->each->update(['status' => 'closed'])),
+                        ->action(fn (Collection $records) => $records->each->update(['status' => AuctionCatalog::STATUS_CLOSED])),
                 ]),
             ])
             ->emptyStateActions([
@@ -607,18 +591,15 @@ class AuctionCatalogResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            // RelationManagers\CatalogImagesRelationManager::class,
-            // RelationManagers\FacilitiesRelationManager::class,
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAuctionCatalogs::route('/'),
+            'index'  => Pages\ListAuctionCatalogs::route('/'),
             'create' => Pages\CreateAuctionCatalog::route('/create'),
-            'edit' => Pages\EditAuctionCatalog::route('/{record}/edit'),
+            'edit'   => Pages\EditAuctionCatalog::route('/{record}/edit'),
         ];
     }
 
@@ -626,7 +607,7 @@ class AuctionCatalogResource extends Resource
     {
         $count = static::getModel()::query()
             ->whereDate('auction_date', '=', Carbon::tomorrow())
-            ->orWhereDate('auction_date', '=', Carbon::today())
+            ->orWhereDate('auction_date', '=', Carbon:: today())
             ->count();
 
         return $count > 0 ? (string) $count : null;
