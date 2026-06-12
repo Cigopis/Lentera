@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Events\ModelCreated;
 use Illuminate\Database\Events\ModelUpdated;
 use Illuminate\Database\Events\ModelDeleted;
@@ -20,10 +21,17 @@ class AppServiceProvider extends ServiceProvider
         //
     }
 
-    public function boot(): void
+   
+
+   public function boot(): void
     {
-        View::share('categories', Category::where('is_active', true)->get());
-        View::share('cities', City::where('is_active', true)->get());
+        if (
+            Schema::hasTable('categories') &&
+            Schema::hasTable('cities')
+        ) {
+            View::share('categories', Category::where('is_active', true)->get());
+            View::share('cities', City::where('is_active', true)->get());
+        }
 
         Event::listen(ModelCreated::class, function ($event) {
             $user = Filament::auth()->user();
